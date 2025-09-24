@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Single Registration</title>
+  <style>
+    :root {
+      --bg: #f6f7fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --border: rgba(0,0,0,0.08);
+      --primary: #2563eb;
+      --shadow: 0 10px 20px rgba(0,0,0,0.08), 0 6px 6px rgba(0,0,0,0.06);
+    }
+
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial; margin: 0; background: var(--bg); color: var(--text); }
+    .page { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; }
+    .card { width: 100%; max-width: 720px; background: var(--card); border-radius: 16px; box-shadow: var(--shadow); padding: 26px; border: 1px solid var(--border); }
+    h2 { margin: 0 0 16px; font-size: 24px; letter-spacing: .2px; }
+
+    .form-group { margin-bottom: 14px; }
+    label { display: block; font-size: 14px; color: var(--muted); margin-bottom: 6px; }
+    input[type="text"], input[type="email"], input[type="tel"], select {
+      width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: #fff; color: var(--text);
+      outline: none; transition: box-shadow .15s ease, border-color .15s ease;
+    }
+    input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15); }
+
+    .btn { appearance: none; border: 0; border-radius: 10px; padding: 10px 14px; font-weight: 600; cursor: pointer; }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { filter: brightness(1.05); }
+    .btn-primary:active { transform: translateY(1px); }
+
+    /* Inline messages */
+    .alert { padding: 10px 12px; border-radius: 10px; margin-bottom: 12px; font-size: 14px; }
+    .alert-success { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+    .alert-error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+    .invalid { border-color: #ef4444 !important; box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important; }
+  </style>
+</head>
+<body>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <div class="page">  
+    <div class="card">
+      <h2>Single Registration</h2>
+      <div id="msg" aria-live="polite"></div>
+
+      <form id="singleForm">
+      <div class="form-group">
+        <label>Email:</label>
+        <input type="email" id="singleEmail" required>
+      </div>
+      <div id="singleDetails" style="display:none;">
+        <div class="form-group">
+          <label>Full Name:</label>
+          <input type="text" id="singleName" required>
+        </div>
+        <div class="form-group">
+          <label>Phone:</label>
+          <input type="tel" id="singlePhone" required>
+        </div>
+        <div class="form-group">
+          <label>Organization:</label>
+          <input type="text" id="singleOrganization" required>
+        </div>
+        <div class="form-group">
+          <label>Category:</label>
+          <select id="singleCategory" required>
+            <option value="" disabled selected>Select category</option>
+            <option value="attendee">Attendee</option>
+            <option value="speaker">Speaker</option>
+            <option value="sponsor">Sponsor</option>
+            <option value="staff">Staff</option>
+          </select>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary" style="margin-top: 10px;">Submit</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Reveal details after email entered
+    document.getElementById('singleEmail').addEventListener('blur', () => {
+      if (document.getElementById('singleEmail').value) {
+        document.getElementById('singleDetails').style.display = 'block';
+      }
+    });
+
+    // Utility: show message banner
+    function showMessage(type, text) {
+      const box = document.getElementById('msg');
+      box.className = 'alert ' + (type === 'success' ? 'alert-success' : 'alert-error');
+      box.textContent = text;
+    }
+
+    // Handle form submission -> POST to PHP endpoint with inline validation
+    document.getElementById('singleForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.currentTarget;
+      // Clear previous invalid states
+      form.querySelectorAll('.invalid').forEach(el => el.classList.remove('invalid'));
+
+      // Validate required fields
+      const requiredIds = ['singleEmail','singleName','singlePhone','singleOrganization','singleCategory'];
+      for (const id of requiredIds) {
+        const el = document.getElementById(id);
+        if (!el || !el.value) {
+          if (el) el.classList.add('invalid');
+          showMessage('error', 'Please fill out all required fields.');
+          return;
+        }
+      }
+
+      const payload = {
+        type: 'single',
+        email: document.getElementById('singleEmail').value.trim(),
+        name: document.getElementById('singleName').value.trim(),
+        phone: document.getElementById('singlePhone').value.trim(),
+        organization: document.getElementById('singleOrganization').value.trim(),
+        category: document.getElementById('singleCategory').value,
+      };
+
+      try {
+        const res = await fetch('save_registration.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (data.message) {
+          showMessage('success', data.message);
+          // Generate invoice PDF
+          await generateInvoice(payload);
+          form.reset();
+          document.getElementById('singleDetails').style.display = 'none';
+        } else {
+          showMessage('error', data.error || 'Failed to save registration.');
+        }
+      } catch (err) {
+        showMessage('error', 'Network error. Please try again.');
+        console.error(err);
+      }
+    });
+
+    async function generateInvoice(payload) {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      const now = new Date();
+      const invNo = 'INV-' + now.getFullYear() + String(now.getMonth()+1).padStart(2,'0') + String(now.getDate()).padStart(2,'0') + '-' + String(now.getHours()).padStart(2,'0') + String(now.getMinutes()).padStart(2,'0') + String(now.getSeconds()).padStart(2,'0');
+
+      // Header
+      doc.setFontSize(18);
+      const pageWidth = doc.internal.pageSize.getWidth();
+      doc.text('INVOICE', pageWidth / 2, 18, { align: 'center' });
+      doc.setFontSize(11);
+      doc.text(`Invoice No: ${invNo}`, 14, 26);
+      doc.text(`Date: ${now.toLocaleString()}`, 14, 32);
+      
+      // Logo (top-right corner)
+      const logoWidth = 40; // adjust as needed
+      const logoHeight = 20; // adjust as needed
+      const logoX = pageWidth - logoWidth - 14;
+      const logoY = 10;
+      try {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.src = '/Registration/mespt_logo.png'; // ensure correct absolute path under XAMPP
+        await new Promise((resolve, reject) => {
+          img.onload = resolve;
+          img.onerror = reject;
+        });
+        doc.addImage(img, 'PNG', logoX, logoY, logoWidth, logoHeight);
+      } catch (e) {
+        console.warn('Logo not added to invoice (single):', e);
+      }
+      
+
+      // Organization block (below header, left aligned)
+      doc.setFontSize(10);
+      let oy = logoY + logoHeight + 15; // start below the logo with extra spacing
+      doc.text('MICRO ENTERPRISES SUPPORT', 14, oy); oy += 6;
+      doc.text('PROGRAMME TRUST (MESPT)', 14, oy); oy += 6;
+      doc.text('MESPT PLAZA, 01 TAUSI RD', 14, oy); oy += 6;
+      doc.text('BTWN WESTLANDS & MUTHITHI RD', 14, oy); oy += 6;
+      doc.text('NAIROBI, NAIROBI 00100', 14, oy);
+
+      // Bill To (left) below organization block
+      doc.setFontSize(12);
+      doc.text('Bill To:', 14, oy + 12);
+      doc.setFontSize(11);
+      doc.text(`Name: ${payload.name}`, 14, oy + 20);
+      doc.text(`Email: ${payload.email}`, 14, oy + 26);
+      doc.text(`Organization: ${payload.organization}`, 14, oy + 32);
+
+      // Pricing by category (KSh)
+      const feeMap = { attendee: 20, staff: 30, speaker: 40, sponsor: 50 };
+      const catKey = String(payload.category || '').toLowerCase();
+      const amount = feeMap[catKey] ?? 0;
+
+      // Table (start below Bill To)
+      let y = oy + 46;
+      doc.setFontSize(12);
+      doc.text('Items', 14, y);
+      y += 6;
+      doc.setFontSize(11);
+      doc.text('Email', 14, y);
+      doc.text('Name', 70, y);
+      doc.text('Category', 120, y);
+      doc.text('Amount (KSh)', 160, y);
+      y += 6;
+      doc.setLineWidth(0.2);
+      doc.line(14, y, 196, y);
+      y += 8;
+      doc.text(payload.email || '', 14, y);
+      doc.text(payload.name || '', 70, y);
+      doc.text((payload.category || '').toString(), 120, y);
+      doc.text(String(amount), 170, y, { align: 'right' });
+      y += 10;
+
+      // Total
+      doc.setFontSize(12);
+      doc.text(`Total: KSh ${amount}`, 14, y);
+
+      // Footer
+      doc.setFontSize(10);
+      doc.text('Thank you for registering.', 14, y + 16);
+
+      doc.save(`${invNo}-${payload.name || 'invoice'}.pdf`);
+    }
+  </script>
+</body>
+</html>

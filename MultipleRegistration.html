@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Multiple Registration</title>
+  <style>
+    :root {
+      --bg: #f6f7fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --border: rgba(0,0,0,0.08);
+      --primary: #2563eb;
+      --primary-600: #1e40af;
+      --success: #16a34a;
+      --shadow: 0 10px 20px rgba(0,0,0,0.08), 0 6px 6px rgba(0,0,0,0.06);
+    }
+
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial; margin: 0; background: var(--bg); color: var(--text); }
+    .page { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; }
+    .card { width: 100%; max-width: 720px; background: var(--card); border-radius: 16px; box-shadow: var(--shadow); padding: 26px; border: 1px solid var(--border); }
+    h2 { margin: 0 0 16px; font-size: 24px; letter-spacing: .2px; }
+    h4 { margin: 14px 0 10px; color: var(--muted); font-size: 14px; font-weight: 600; }
+
+    .form-group { margin-bottom: 14px; }
+    label { display: block; font-size: 14px; color: var(--muted); margin-bottom: 6px; }
+    input[type="text"], input[type="email"], input[type="tel"], select {
+      width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: #fff; color: var(--text);
+      outline: none; transition: box-shadow .15s ease, border-color .15s ease;
+    }
+    input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15); }
+
+    .email-entry { display: grid; grid-template-columns: 1fr 1fr; column-gap: 14px; row-gap: 12px; margin: 18px 0; }
+    .email-entry input[type="email"] { grid-column: span 2; }
+    @media (max-width: 640px) {
+      .email-entry { grid-template-columns: 1fr; }
+      .email-entry input[type="email"] { grid-column: span 1; }
+    }
+
+    /* Static field styling to look like a disabled input */
+    .static-field {
+      width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border);
+      background: #f9fafb; color: var(--muted);
+    }
+
+    .actions { display: flex; align-items: center; gap: 10px; margin-top: 16px; }
+    .btn { appearance: none; border: 0; border-radius: 10px; padding: 10px 14px; font-weight: 600; cursor: pointer; }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { filter: brightness(1.05); }
+    .btn-primary:active { transform: translateY(1px); }
+    .add-btn { background: var(--success); color: #fff; border: 0; padding: 8px 12px; border-radius: 8px; cursor: pointer; }
+    .add-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    /* Inline messages */
+    .alert { padding: 10px 12px; border-radius: 10px; margin-bottom: 12px; font-size: 14px; }
+    .alert-success { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+    .alert-error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+    .invalid { border-color: #ef4444 !important; box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important; }
+  </style>
+</head>
+<body>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <div class="page">
+    <div class="card">
+      <h2>Multiple Registration</h2>
+      <div id="msg" aria-live="polite"></div>
+
+      <form id="multipleForm">
+      <div class="form-group">
+        <label>Primary Email:</label>
+        <input type="email" id="primaryEmail" required>
+      </div>
+      <div id="primaryDetails" style="display:none;">
+        <div class="form-group">
+          <label>Primary Full Name:</label>
+          <input type="text" id="primaryName" placeholder="Enter full name">
+        </div>
+        <div class="form-group">
+          <label>Primary Phone:</label>
+          <input type="tel" id="primaryPhone" placeholder="Enter phone number">
+        </div>
+        <div class="form-group">
+          <label>Primary Organization:</label>
+          <input type="text" id="primaryOrganization" placeholder="Enter organization name">
+        </div>
+        <div class="form-group">
+          <label>Primary Category:</label>
+          <select id="primaryCategory">
+            <option value="" disabled selected>Select category</option>
+            <option value="attendee">Attendee</option>
+            <option value="speaker">Speaker</option>
+            <option value="sponsor">Sponsor</option>
+            <option value="staff">Staff</option>
+          </select>
+        </div>
+      </div>
+      <div id="emailContainer" style="display:none;">
+        <h4>Additional Emails</h4>
+        <div id="emails"></div>
+        <button type="button" class="add-btn" id="addBtn" disabled>+ Add Email</button>
+      </div>
+      <button type="submit" class="btn btn-primary" style="margin-top: 10px;">Submit</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Simple message helper
+    function showMessage(type, text) {
+      const box = document.getElementById('msg');
+      box.className = 'alert ' + (type === 'success' ? 'alert-success' : 'alert-error');
+      box.textContent = text;
+    }
+
+    // Check whether primary info is valid
+    function isPrimaryValid() {
+      const ids = ['primaryEmail','primaryName','primaryPhone','primaryOrganization','primaryCategory'];
+      let ok = true;
+      ids.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el || !el.value) ok = false;
+      });
+      return ok;
+    }
+
+    async function generateInvoice(payload) {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      const now = new Date();
+      const invNo = 'INV-' + now.getFullYear() + String(now.getMonth()+1).padStart(2,'0') + String(now.getDate()).padStart(2,'0') + '-' + String(now.getHours()).padStart(2,'0') + String(now.getMinutes()).padStart(2,'0') + String(now.getSeconds()).padStart(2,'0');
+
+      // Header
+      doc.setFontSize(18);
+      const pageWidth = doc.internal.pageSize.getWidth();
+      doc.text('INVOICE', pageWidth / 2, 18, { align: 'center' });
+      doc.setFontSize(11);
+      doc.text(`Invoice No: ${invNo}`, 14, 26);
+      doc.text(`Date: ${now.toLocaleString()}`, 14, 32);
+
+      // Logo (top-right corner)
+      const logoWidth = 40; // adjust as needed
+      const logoHeight = 20; // adjust as needed
+      const logoX = pageWidth - logoWidth - 14;
+      const logoY = 10;
+      try {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.src = '/Registration/mespt_logo.png'; // ensure correct absolute path under XAMPP
+        await new Promise((resolve, reject) => {
+          img.onload = resolve;
+          img.onerror = reject;
+        });
+        doc.addImage(img, 'PNG', logoX, logoY, logoWidth, logoHeight);
+      } catch (e) {
+        // If logo fails to load, continue without blocking
+        console.warn('Logo not added to invoice:', e);
+      }
+
+      // Organization block (below header, left aligned)
+      doc.setFontSize(10);
+      let oy = logoY + logoHeight + 15;// start a bit lower than the date line
+      doc.text('MICRO ENTERPRISES SUPPORT', 14, oy); oy += 6;
+      doc.text('PROGRAMME TRUST (MESPT)', 14, oy); oy += 6;
+      doc.text('MESPT PLAZA, 01 TAUSI RD', 14, oy); oy += 6;
+      doc.text('BTWN WESTLANDS & MUTHITHI RD', 14, oy); oy += 6;
+      doc.text('NAIROBI, NAIROBI 00100', 14, oy);
+
+      // Bill To (left) below organization block
+      doc.setFontSize(12);
+      doc.text('Bill To:', 14, oy + 12);
+      doc.setFontSize(11);
+      const bp = payload.primary || {};
+      doc.text(`Name: ${bp.name || ''}`, 14, oy + 20);
+      doc.text(`Email: ${bp.email || ''}`, 14, oy + 26);
+      doc.text(`Organization: ${bp.organization || ''}`, 14, oy + 32);
+
+
+      // Pricing map (KSh)
+      const feeMap = { attendee: 20, staff: 30, speaker: 40, sponsor: 50 };
+
+      // Table header 
+      let y = oy + 46;
+      doc.setFontSize(12);
+      doc.text('Invoice Details', 14, y);
+      y += 6;
+      doc.setFontSize(11);
+      // Define column positions
+      const col = { email: 14, name: 80, cat: 120, amt: 190 };
+      // Header row
+      doc.text('Email', col.email, y);
+      doc.text('Name', col.name, y);
+      doc.text('Category', col.cat, y);
+      doc.text('Amount (KSh)', col.amt, y, { align: 'right' });
+      y += 6;
+      doc.setLineWidth(0.2);
+      doc.line(14, y, 196, y);
+      y += 8;
+
+      // Primary row
+      const p = payload.primary || {};
+      const pCat = String(p.category || '').toLowerCase();
+      const pAmount = feeMap[pCat] ?? 0;
+      doc.text(p.email || '', col.email, y);
+      doc.text(p.name || '', col.name, y);
+      doc.text(p.category || '', col.cat, y);
+      doc.text(String(pAmount), col.amt, y, { align: 'right' });
+      y += 8;
+
+      // Additional participants
+      const list = Array.isArray(payload.additional) ? payload.additional : [];
+      let total = pAmount;
+      if (list.length) {
+        list.forEach((a) => {
+          if (y > 270) { doc.addPage(); y = 20; }
+          const aCat = String(a.category || '').toLowerCase();
+          const aAmount = feeMap[aCat] ?? 0;
+          doc.text(a.email || '', col.email, y);
+          doc.text(a.name || '', col.name, y);
+          doc.text(a.category || '', col.cat, y);
+          doc.text(String(aAmount), col.amt, y, { align: 'right' });
+          y += 8;
+          total += aAmount;
+        });
+      }
+
+      // Total
+      if (y > 260) { doc.addPage(); y = 20; }
+      doc.setFontSize(12);
+      doc.text(`Total: KSh ${total}`, 14, y + 6);
+
+      // Footer
+      y += 14;
+      if (y > 280) { doc.addPage(); y = 20; }
+      doc.setFontSize(10);
+      doc.text('Thank you for registering.', 14, y);
+
+      const name = (p.name || 'invoice').replace(/[^a-z0-9-_]+/gi,'_');
+      doc.save(`${invNo}-${name}.pdf`);
+    }
+
+    function updateAddBtnState() {
+      const addBtn = document.getElementById('addBtn');
+      if (addBtn) addBtn.disabled = !isPrimaryValid();
+    }
+
+    // Show primary details and email container after primary email is entered
+    document.getElementById('primaryEmail').addEventListener('blur', () => {
+      const hasPrimary = !!document.getElementById('primaryEmail').value;
+      if (hasPrimary) {
+        const details = document.getElementById('primaryDetails');
+        const emailContainer = document.getElementById('emailContainer');
+        if (details) {
+          details.style.display = 'block';
+          // Make name and phone required only once visible
+          const nameEl = document.getElementById('primaryName');
+          const phoneEl = document.getElementById('primaryPhone');
+          const catEl = document.getElementById('primaryCategory');
+          const orgEl = document.getElementById('primaryOrganization');
+          if (nameEl) nameEl.required = true;
+          if (phoneEl) phoneEl.required = true;
+          if (catEl) catEl.required = true;
+          if (orgEl) orgEl.required = true;
+        }
+        if (emailContainer) emailContainer.style.display = 'block';
+      }
+      updateAddBtnState();
+    });
+
+    // Keep add button state updated when primary fields change
+    ['primaryName','primaryPhone','primaryOrganization','primaryCategory'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener('input', updateAddBtnState);
+    });
+
+    // Add new email + details
+    function addEmail() {
+      // Gate: ensure primary is complete
+      if (!isPrimaryValid()) {
+        showMessage('error', 'Complete primary information before adding additional entries.');
+        return;
+      }
+      const div = document.createElement('div');
+      div.classList.add('email-entry');
+      div.innerHTML = `
+        <input type=\"email\" placeholder=\"Enter email\" required>
+        <input type=\"text\" placeholder=\"Full Name\" required>
+        <input type=\"tel\" placeholder=\"Phone\" required>
+        <div class=\"static-field org-static\"></div>
+        <select required>
+          <option value=\"\" disabled selected>Select category</option>
+          <option value=\"attendee\">Attendee</option>
+          <option value=\"speaker\">Speaker</option>
+          <option value=\"sponsor\">Sponsor</option>
+          <option value=\"staff\">Staff</option>
+        </select>
+        <input type=\"hidden\" class=\"org-hidden\" name=\"organization[]\" value=\"\">
+      `;
+      document.getElementById('emails').appendChild(div);
+      // After adding, sync organization value and lock editing
+      syncOrgToChildren();
+    }
+
+    document.getElementById('addBtn').addEventListener('click', addEmail);
+
+    // Keep additional org fields synced and read-only based on primary org
+    function syncOrgToChildren() {
+      const primaryOrg = document.getElementById('primaryOrganization')?.value || '';
+      document.querySelectorAll('#emails .org-static').forEach((el) => {
+        el.textContent = primaryOrg || 'Organization';
+      });
+      document.querySelectorAll('#emails .org-hidden').forEach((el) => {
+        el.value = primaryOrg;
+      });
+    }
+
+    // Update on primary organization change
+    const primaryOrgEl = document.getElementById('primaryOrganization');
+    if (primaryOrgEl) {
+      primaryOrgEl.addEventListener('input', syncOrgToChildren);
+    }
+
+    // Handle form submission -> POST to PHP endpoint with inline validation
+    document.getElementById('multipleForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.currentTarget;
+      // Clear previous invalid states
+      document.querySelectorAll('.invalid').forEach(el => el.classList.remove('invalid'));
+
+      // Validate primary fields
+      const requiredPrimary = ['primaryEmail','primaryName','primaryPhone','primaryOrganization','primaryCategory'];
+      for (const id of requiredPrimary) {
+        const el = document.getElementById(id);
+        if (!el || !el.value) {
+          if (el) el.classList.add('invalid');
+          showMessage('error', 'Please complete all primary fields.');
+          return;
+        }
+      }
+
+      // Collect primary
+      const payload = {
+        type: 'multiple',
+        primary: {
+          email: document.getElementById('primaryEmail').value.trim(),
+          name: document.getElementById('primaryName')?.value?.trim() || '',
+          phone: document.getElementById('primaryPhone')?.value?.trim() || '',
+          organization: document.getElementById('primaryOrganization')?.value?.trim() || '',
+          category: document.getElementById('primaryCategory')?.value || ''
+        },
+        additional: []
+      };
+
+      // Collect additional entries, validating each row
+      let invalidRow = false;
+      document.querySelectorAll('#emails .email-entry').forEach(entry => {
+        const email = entry.querySelector('input[type="email"]')?.value?.trim() || '';
+        const textInputs = entry.querySelectorAll('input[type="text"]');
+        const name = textInputs[0]?.value?.trim() || '';
+        const phone = entry.querySelector('input[type="tel"]')?.value?.trim() || '';
+        const orgHidden = entry.querySelector('.org-hidden')?.value?.trim() || '';
+        const category = entry.querySelector('select')?.value || '';
+        // Validate row
+        if (!email || !name || !phone || !orgHidden || !category) {
+          // mark visible fields invalid
+          if (!email) entry.querySelector('input[type="email"]').classList.add('invalid');
+          if (!name) textInputs[0].classList.add('invalid');
+          if (!phone) entry.querySelector('input[type="tel"]').classList.add('invalid');
+          if (!category) entry.querySelector('select').classList.add('invalid');
+          invalidRow = true;
+        }
+        payload.additional.push({ email, name, phone, organization: orgHidden, category });
+      });
+
+      if (invalidRow) {
+        showMessage('error', 'Please complete all fields in additional entries.');
+        return;
+      }
+
+      try {
+        const res = await fetch('save_registration.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.message) {
+          showMessage('success', data.message);
+          // Generate invoice PDF for multiple registration
+          await generateInvoice(payload);
+          // Reset form
+          form.reset();
+          // Hide sections again
+          document.getElementById('primaryDetails').style.display = 'none';
+          document.getElementById('emailContainer').style.display = 'none';
+          // Clear any additional entries
+          document.getElementById('emails').innerHTML = '';
+          updateAddBtnState();
+        } else {
+          showMessage('error', data.error || 'Failed to save registration.');
+        }
+      } catch (err) {
+        showMessage('error', 'Network error. Please try again.');
+        console.error(err);
+      }
+    });
+  </script>
+</body>
+</html>
