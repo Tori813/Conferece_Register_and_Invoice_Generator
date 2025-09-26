@@ -1,0 +1,16 @@
+{
+    "name": "conferece/register-invoice-generator",
+    "description": "Conference Registration and Invoice Generator",
+    "type": "project",
+    "license": "MIT",
+    "minimum-stability": "stable",
+    "require": {
+        "phpmailer/phpmailer": "^6.10",
+        "vlucas/phpdotenv": "^5.6"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        }
+    }
+}

@@ -49,24 +49,24 @@
 
       <form id="singleForm">
       <div class="form-group">
-        <label>Email:</label>
-        <input type="email" id="singleEmail" required>
+        <label for="singleEmail">Email:</label>
+        <input type="email" id="singleEmail" name="email" autocomplete="email" required>
       </div>
       <div id="singleDetails" style="display:none;">
         <div class="form-group">
-          <label>Full Name:</label>
-          <input type="text" id="singleName" required>
+          <label for="singleName">Full Name:</label>
+          <input type="text" id="singleName" name="name" autocomplete="name" required>
         </div>
         <div class="form-group">
-          <label>Phone:</label>
-          <input type="tel" id="singlePhone" required>
+          <label for="singlePhone">Phone:</label>
+          <input type="tel" id="singlePhone" name="phone" autocomplete="tel" required>
         </div>
         <div class="form-group">
-          <label>Organization:</label>
-          <input type="text" id="singleOrganization" required>
+          <label for="singleOrganization">Organization:</label>
+          <input type="text" id="singleOrganization" name="organization" autocomplete="organization" required>
         </div>
         <div class="form-group">
-          <label>Category:</label>
+          <label for="singleCategory">Category:</label>
           <select id="singleCategory" required>
             <option value="" disabled selected>Select category</option>
             <option value="attendee">Attendee</option>
@@ -124,111 +124,220 @@
       };
 
       try {
+        // First save the registration
         const res = await fetch('save_registration.php', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
         });
+        
         const data = await res.json();
-        if (data.message) {
-          showMessage('success', data.message);
-          // Generate invoice PDF
-          await generateInvoice(payload);
-          form.reset();
-          document.getElementById('singleDetails').style.display = 'none';
-        } else {
-          showMessage('error', data.error || 'Failed to save registration.');
+        if (!res.ok) {
+          // Handle duplicate email case specifically
+          if (res.status === 409 && data.error && data.error.includes('already registered')) {
+            const emailMatch = data.error.match(/:\s*([^\]]+)/);
+            const email = emailMatch ? emailMatch[1].trim() : 'this email';
+            throw new Error(`The email address ${email} is already registered. Please use a different email or contact support if you need assistance.`);
+          }
+          throw new Error(data.error || 'Failed to save registration. Please try again.');
         }
+        
+        showMessage('success', data.message || 'Registration saved successfully');
+        
+        // Generate the PDF and send email
+        const pdfResult = await generateInvoice(payload);
+        
+        if (!pdfResult || !pdfResult.success) {
+          throw new Error(pdfResult?.error || 'Failed to generate and send invoice');
+        }
+        
+        // If we get here, both registration and invoice were successful
+        showMessage('success', 'Registration successful! Invoice has been sent to your email.');
+        form.reset();
+        document.getElementById('singleDetails').style.display = 'none';
+        return { success: true };
       } catch (err) {
-        showMessage('error', 'Network error. Please try again.');
-        console.error(err);
+        console.error('Form submission error:', err);
+        // Handle specific error cases
+        if (err.message.includes('already registered')) {
+          showMessage('error', err.message);
+        } else if (err.message.includes('Failed to save registration')) {
+          showMessage('error', 'Failed to save registration: ' + (err.message || 'Please try again.'));
+        } else if (err.message.includes('Failed to generate and send invoice')) {
+          showMessage('error', 'Registration saved, but there was an issue with the invoice: ' + (err.message || 'Please contact support.'));
+        } else {
+          showMessage('error', 'An error occurred. Please try again or contact support if the problem persists.');
+        }
       }
     });
 
     async function generateInvoice(payload) {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
-      const now = new Date();
-      const invNo = 'INV-' + now.getFullYear() + String(now.getMonth()+1).padStart(2,'0') + String(now.getDate()).padStart(2,'0') + '-' + String(now.getHours()).padStart(2,'0') + String(now.getMinutes()).padStart(2,'0') + String(now.getSeconds()).padStart(2,'0');
-
-      // Header
-      doc.setFontSize(18);
-      const pageWidth = doc.internal.pageSize.getWidth();
-      doc.text('INVOICE', pageWidth / 2, 18, { align: 'center' });
-      doc.setFontSize(11);
-      doc.text(`Invoice No: ${invNo}`, 14, 26);
-      doc.text(`Date: ${now.toLocaleString()}`, 14, 32);
-      
-      // Logo (top-right corner)
-      const logoWidth = 40; // adjust as needed
-      const logoHeight = 20; // adjust as needed
-      const logoX = pageWidth - logoWidth - 14;
-      const logoY = 10;
       try {
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.src = '/Registration/mespt_logo.png'; // ensure correct absolute path under XAMPP
-        await new Promise((resolve, reject) => {
-          img.onload = resolve;
-          img.onerror = reject;
-        });
-        doc.addImage(img, 'PNG', logoX, logoY, logoWidth, logoHeight);
-      } catch (e) {
-        console.warn('Logo not added to invoice (single):', e);
-      }
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        const now = new Date();
+        const invNo = 'INV-' + now.getFullYear() + String(now.getMonth()+1).padStart(2,'0') + String(now.getDate()).padStart(2,'0') + '-' + String(now.getHours()).padStart(2,'0') + String(now.getMinutes()).padStart(2,'0') + String(now.getSeconds()).padStart(2,'0');
+
+        // Header
+        doc.setFontSize(18);
+        const pageWidth = doc.internal.pageSize.getWidth();
+        doc.text('INVOICE', pageWidth / 2, 18, { align: 'center' });
+        doc.setFontSize(11);
+        doc.text(`Invoice No: ${invNo}`, 14, 26);
+        doc.text(`Date: ${now.toLocaleString()}`, 14, 32);
+        
+        // Logo (top-right corner)
+        const logoWidth = 40; // adjust as needed
+        const logoHeight = 20; // adjust as needed
+        const logoX = pageWidth - logoWidth - 14;
+        const logoY = 10;
+        
+        // Try to add logo if available
+        try {
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.src = 'Mespt_logo.png'; // Using relative path to the logo in the same directory
+          await new Promise((resolve, reject) => {
+            img.onload = resolve;
+            img.onerror = reject;
+          });
+          doc.addImage(img, 'PNG', logoX, logoY, logoWidth, logoHeight);
+        } catch (e) {
+          console.warn('Logo not added to invoice (single):', e);
+        }
       
+        // Organization block (below header, left aligned)
+        doc.setFontSize(10);
+        let oy = logoY + logoHeight + 15; // start below the logo with extra spacing
+        doc.text('MICRO ENTERPRISES SUPPORT', 14, oy); oy += 6;
+        doc.text('PROGRAMME TRUST (MESPT)', 14, oy); oy += 6;
+        doc.text('MESPT PLAZA, 01 TAUSI RD', 14, oy); oy += 6;
+        doc.text('BTWN WESTLANDS & MUTHITHI RD', 14, oy); oy += 6;
+        doc.text('NAIROBI, NAIROBI 00100', 14, oy);
 
-      // Organization block (below header, left aligned)
-      doc.setFontSize(10);
-      let oy = logoY + logoHeight + 15; // start below the logo with extra spacing
-      doc.text('MICRO ENTERPRISES SUPPORT', 14, oy); oy += 6;
-      doc.text('PROGRAMME TRUST (MESPT)', 14, oy); oy += 6;
-      doc.text('MESPT PLAZA, 01 TAUSI RD', 14, oy); oy += 6;
-      doc.text('BTWN WESTLANDS & MUTHITHI RD', 14, oy); oy += 6;
-      doc.text('NAIROBI, NAIROBI 00100', 14, oy);
+        // Bill To section
+        doc.text('Bill To:', 14, oy + 12);
+        doc.setFontSize(11);
+        doc.text(`Name: ${payload.name || ''}`, 14, oy + 20);
+        doc.text(`Email: ${payload.email || ''}`, 14, oy + 26);
+        doc.text(`Organization: ${payload.organization || ''}`, 14, oy + 32);
+        
+        // Pricing by category (KSh)
+        const feeMap = { attendee: 20, staff: 30, speaker: 40, sponsor: 50 };
+        const catKey = String(payload.category || '').toLowerCase();
+        const amount = feeMap[catKey] ?? 0;
 
-      // Bill To (left) below organization block
-      doc.setFontSize(12);
-      doc.text('Bill To:', 14, oy + 12);
-      doc.setFontSize(11);
-      doc.text(`Name: ${payload.name}`, 14, oy + 20);
-      doc.text(`Email: ${payload.email}`, 14, oy + 26);
-      doc.text(`Organization: ${payload.organization}`, 14, oy + 32);
+        // Table (start below Bill To)
+        let y = oy + 50;
+        doc.setFontSize(12);
+        doc.text('Items', 14, y);
+        y += 6;
+        doc.setFontSize(11);
+        
+        // Table header
+        doc.text('Description', 14, y);
+        doc.text('Amount (KSh)', 160, y, { align: 'right' });
+        y += 6;
+        
+        // Table row
+        doc.setLineWidth(0.2);
+        doc.line(14, y, 196, y);
+        y += 8;
+        
+        // Item details
+        doc.text(`Conference Registration (${payload.category || 'N/A'})`, 14, y);
+        doc.text(String(amount), 196, y, { align: 'right' });
+        y += 15;
 
-      // Pricing by category (KSh)
-      const feeMap = { attendee: 20, staff: 30, speaker: 40, sponsor: 50 };
-      const catKey = String(payload.category || '').toLowerCase();
-      const amount = feeMap[catKey] ?? 0;
+        // Total
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Total:', 14, y);
+        doc.text(`KSh ${amount}`, 196, y, { align: 'right' });
+        y += 10;
 
-      // Table (start below Bill To)
-      let y = oy + 46;
-      doc.setFontSize(12);
-      doc.text('Items', 14, y);
-      y += 6;
-      doc.setFontSize(11);
-      doc.text('Email', 14, y);
-      doc.text('Name', 70, y);
-      doc.text('Category', 120, y);
-      doc.text('Amount (KSh)', 160, y);
-      y += 6;
-      doc.setLineWidth(0.2);
-      doc.line(14, y, 196, y);
-      y += 8;
-      doc.text(payload.email || '', 14, y);
-      doc.text(payload.name || '', 70, y);
-      doc.text((payload.category || '').toString(), 120, y);
-      doc.text(String(amount), 170, y, { align: 'right' });
-      y += 10;
+        // Footer
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.text('Thank you for registering.', 14, y + 10);
 
-      // Total
-      doc.setFontSize(12);
-      doc.text(`Total: KSh ${amount}`, 14, y);
-
-      // Footer
-      doc.setFontSize(10);
-      doc.text('Thank you for registering.', 14, y + 16);
-
-      doc.save(`${invNo}-${payload.name || 'invoice'}.pdf`);
+        // Generate the PDF as a blob
+        const pdfBlob = doc.output('blob');
+        
+        // Generate a safe filename
+        const safeName = (payload.name || 'invoice').replace(/[^a-z0-9]/gi, '_').toLowerCase();
+        const fileName = `invoice_${invNo}_${safeName}.pdf`;
+        
+        // Save the PDF locally (for debugging)
+        doc.save(fileName);
+        
+        // Prepare form data for email
+        const formData = new FormData();
+        
+        try {
+            // Create a Blob from the PDF data
+            const pdfBlob = doc.output('blob');
+            
+            // Create a sanitized filename with invoice number and name
+            const sanitizedName = (payload.name || 'invoice').replace(/[^a-z0-9]/gi, '_').toLowerCase();
+            const pdfFileName = `${invNo}-${sanitizedName}.pdf`;
+            
+            // Append the PDF blob directly to FormData with the formatted filename
+            formData.append('pdf', pdfBlob, pdfFileName);
+            
+            // Append other form data
+            formData.append('email', payload.email || '');
+            formData.append('name', payload.name || '');
+            formData.append('invoice_number', invNo);
+            
+            console.log('Sending form data with file:', {
+                fileName: pdfFileName,
+                size: pdfBlob.size,
+                type: 'application/pdf'
+            });
+            
+            // Send the email
+            const res = await fetch('send_invoice.php', { 
+                method: 'POST',
+                body: formData
+                // Don't set Content-Type header - let the browser set it with the boundary
+            });
+            
+            // Handle the response
+            const responseText = await res.text();
+            
+            try {
+                const result = JSON.parse(responseText);
+                if (!res.ok) {
+                    throw new Error(result.error || `HTTP error! status: ${res.status}`);
+                }
+                
+                // Return success response
+                return {
+                    success: true,
+                    message: result.message || 'Email sent successfully',
+                    pdfBlob: pdfBlob
+                };
+                
+            } catch (e) {
+                console.error('Invalid JSON response:', responseText);
+                throw new Error(`Invalid server response: ${responseText.substring(0, 200)}`);
+            }
+            
+        } catch (error) {
+            console.error('Error in generateInvoice:', error);
+            throw error; // Re-throw to be caught by the outer try-catch
+        }
+        
+      } catch (error) {
+        console.error('Error in generateInvoice:', error);
+        return {
+          success: false,
+          error: error.message || 'Failed to generate invoice'
+        };
+      }
     }
   </script>
 </body>

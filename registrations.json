@@ -1,206 +1,38 @@
 [
     {
-        "type": "multiple",
-        "primary": {
-            "email": "vokello@Mespt.org",
-            "name": "Victoria",
-            "phone": "4776543",
-            "organization": "Mespt",
-            "category": "speaker"
-        },
-        "additional": [
-            {
-                "email": "Juma@mespt.org",
-                "name": "Juma",
-                "phone": "4565433",
-                "organization": "Mespt",
-                "category": "sponsor"
-            }
-        ],
-        "created_at": "2025-09-24 10:04:43"
-    },
-    {
         "type": "single",
-        "email": "amber@gmail.com",
-        "name": "Amber",
-        "phone": "4565432",
+        "email": "vaokello@gmail.com",
+        "name": "Victoria Okello",
+        "phone": "0712345678",
         "organization": "Mespt",
         "category": "staff",
-        "created_at": "2025-09-24 10:05:46"
+        "created_at": "2025-09-25 14:34:45"
     },
     {
         "type": "single",
-        "email": "test@gmail.com",
-        "name": "Test",
-        "phone": "0789765432",
+        "email": "iamjumaemmanuel254@gmail.com",
+        "name": "Juma",
+        "phone": "0712345678",
         "organization": "Mespt",
         "category": "staff",
-        "created_at": "2025-09-24 10:06:22"
-    },
-    {
-        "type": "multiple",
-        "primary": {
-            "email": "Jack@gmail.com",
-            "name": "Jack",
-            "phone": "4776543",
-            "organization": "Mespt",
-            "category": "sponsor"
-        },
-        "additional": [
-            {
-                "email": "Trey@gmail.com",
-                "name": "Trey",
-                "phone": "45678765",
-                "organization": "Mespt",
-                "category": "speaker"
-            }
-        ],
-        "created_at": "2025-09-24 10:17:22"
-    },
-    {
-        "type": "multiple",
-        "primary": {
-            "email": "Joy@mespt.org",
-            "name": "Joy",
-            "phone": "34654",
-            "organization": "Mespt",
-            "category": "sponsor"
-        },
-        "additional": [],
-        "created_at": "2025-09-24 10:18:14"
-    },
-    {
-        "type": "multiple",
-        "primary": {
-            "email": "Axel@mespt.org",
-            "name": "Axel",
-            "phone": "3456765",
-            "organization": "Mespt",
-            "category": "staff"
-        },
-        "additional": [
-            {
-                "email": "diana@mespt.org",
-                "name": "diana",
-                "phone": "34565",
-                "organization": "Mespt",
-                "category": "sponsor"
-            }
-        ],
-        "created_at": "2025-09-24 10:20:38"
-    },
-    {
-        "type": "multiple",
-        "primary": {
-            "email": "Ray@gmail.com",
-            "name": "Ray",
-            "phone": "345676543",
-            "organization": "Mespt",
-            "category": "speaker"
-        },
-        "additional": [],
-        "created_at": "2025-09-24 10:24:44"
+        "created_at": "2025-09-25 14:38:43"
     },
     {
         "type": "single",
-        "email": "rock@mail.com",
-        "name": "rock",
-        "phone": "567654",
-        "organization": "Test",
-        "category": "sponsor",
-        "created_at": "2025-09-24 10:29:53"
-    },
-    {
-        "type": "single",
-        "email": "Maq@mespt.org",
-        "name": "Maq",
-        "phone": "345654",
-        "organization": "Test",
-        "category": "sponsor",
-        "created_at": "2025-09-24 10:41:11"
-    },
-    {
-        "type": "single",
-        "email": "c@gmail.com",
-        "name": "c",
-        "phone": "345654",
-        "organization": "Test",
-        "category": "sponsor",
-        "created_at": "2025-09-24 10:42:28"
-    },
-    {
-        "type": "single",
-        "email": "gh@gmail.com",
-        "name": "gh",
-        "phone": "345654",
+        "email": "mukamijoy240@gmail.com",
+        "name": "Joy Mukami",
+        "phone": "0712345678",
         "organization": "Mespt",
         "category": "staff",
-        "created_at": "2025-09-24 10:44:44"
+        "created_at": "2025-09-25 14:43:18"
     },
     {
         "type": "single",
-        "email": "dan@mespt.org",
-        "name": "dan",
-        "phone": "3456765",
+        "email": "ejuma@mespt.org",
+        "name": "Joy Mukami",
+        "phone": "0712345678",
         "organization": "Mespt",
         "category": "sponsor",
-        "created_at": "2025-09-24 10:46:19"
-    },
-    {
-        "type": "single",
-        "email": "sd@gmail.com",
-        "name": "sd",
-        "phone": "34565",
-        "organization": "Mespt",
-        "category": "staff",
-        "created_at": "2025-09-24 10:46:49"
-    },
-    {
-        "type": "single",
-        "email": "emma@mespt.org",
-        "name": "emma",
-        "phone": "456776",
-        "organization": "Mespt",
-        "category": "staff",
-        "created_at": "2025-09-24 10:48:42"
-    },
-    {
-        "type": "single",
-        "email": "emm@mespt.org",
-        "name": "emma",
-        "phone": "456776",
-        "organization": "Mespt",
-        "category": "staff",
-        "created_at": "2025-09-24 10:49:28"
-    },
-    {
-        "type": "single",
-        "email": "ben@gmail.com",
-        "name": "ben",
-        "phone": "345676543",
-        "organization": "Mespt",
-        "category": "staff",
-        "created_at": "2025-09-24 10:50:03"
-    },
-    {
-        "type": "single",
-        "email": "hat@gmail.com",
-        "name": "hat",
-        "phone": "345654",
-        "organization": "Mespt",
-        "category": "staff",
-        "created_at": "2025-09-24 10:51:05"
-    },
-    {
-        "type": "multiple",
-        "primary": {
-            "email": "happy@gmail.com",
-            "name": "happy",
-            "phone": "456765",
-            "organization": "Mespt",
-            "category": "attendee"
-        },
-        "additional": [],
-        "created_at": "2025-09-24 10:52:26"
+        "created_at": "2025-09-25 14:52:29"
     }
 ]

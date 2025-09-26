@@ -1,6 +1,15 @@
 <?php
+// Set CORS headers
 header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 header("Content-Type: application/json; charset=UTF-8");
+
+// Handle preflight OPTIONS request
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
 
 // File where registrations will be stored
 $file = __DIR__ . DIRECTORY_SEPARATOR . "registrations.json";
@@ -10,7 +19,11 @@ $raw = file_get_contents("php://input");
 $data = json_decode($raw, true);
 
 if (!$data) {
-    echo json_encode(["error" => "No data received"]);
+    http_response_code(400);
+    echo json_encode([
+        "success" => false,
+        "error" => "No data received"
+    ]);
     exit;
 }
 
@@ -54,13 +67,21 @@ $submittedEmails = collect_emails_from_record($data);
 
 // Guard: require at least one email
 if (empty($submittedEmails)) {
-    echo json_encode(["error" => "No email provided in submission."]);
+    http_response_code(400);
+    echo json_encode([
+        "success" => false,
+        "error" => "No email provided in submission."
+    ]);
     exit;
 }
 
 // Check duplicates within the same submission
 if (count($submittedEmails) !== count(array_unique($submittedEmails))) {
-    echo json_encode(["error" => "Duplicate emails found within this submission. Each participant must have a unique email."]);
+    http_response_code(400);
+    echo json_encode([
+        "success" => false,
+        "error" => "Duplicate emails found within this submission. Each participant must have a unique email."
+    ]);
     exit;
 }
 
@@ -70,7 +91,11 @@ foreach ($submittedEmails as $em) {
     if (isset($existingEmails[$em])) $already[] = $em;
 }
 if (!empty($already)) {
-    echo json_encode(["error" => "The following email(s) are already registered: " . implode(", ", $already)]);
+    http_response_code(409); // Conflict
+    echo json_encode([
+        "success" => false,
+        "error" => "The following email(s) are already registered: " . implode(", ", $already)
+    ]);
     exit;
 }
 
@@ -81,9 +106,17 @@ $data["created_at"] = date("Y-m-d H:i:s");
 $registrations[] = $data;
 
 // Save back to file
-if (file_put_contents($file, json_encode($registrations, JSON_PRETTY_PRINT))) {
-    echo json_encode(["message" => "Registration saved successfully!"]);
+if (file_put_contents($file, json_encode($registrations, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE))) {
+    http_response_code(201); // Created
+    echo json_encode([
+        "success" => true,
+        "message" => "Registration saved successfully!"
+    ]);
 } else {
-    echo json_encode(["error" => "Failed to save registration."]);
+    http_response_code(500);
+    echo json_encode([
+        "success" => false,
+        "error" => "Failed to save registration. Please try again."
+    ]);
 }
 ?>
