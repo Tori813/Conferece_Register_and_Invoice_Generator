@@ -1,38 +1,31 @@
 [
     {
+        "type": "multiple",
+        "primary": {
+            "email": "vickydeluxe0@gmail.com",
+            "name": "Victoria Okello",
+            "phone": "0712345678",
+            "organization": "Mespt",
+            "category": "attendee"
+        },
+        "additional": [
+            {
+                "email": "vaokello@gmail.com",
+                "name": "Victoria",
+                "phone": "0712345678",
+                "organization": "Mespt",
+                "category": "staff"
+            }
+        ],
+        "created_at": "2025-09-26 07:25:31"
+    },
+    {
         "type": "single",
-        "email": "vaokello@gmail.com",
+        "email": "victoriaokello4@gmail.com",
         "name": "Victoria Okello",
         "phone": "0712345678",
         "organization": "Mespt",
         "category": "staff",
-        "created_at": "2025-09-25 14:34:45"
-    },
-    {
-        "type": "single",
-        "email": "iamjumaemmanuel254@gmail.com",
-        "name": "Juma",
-        "phone": "0712345678",
-        "organization": "Mespt",
-        "category": "staff",
-        "created_at": "2025-09-25 14:38:43"
-    },
-    {
-        "type": "single",
-        "email": "mukamijoy240@gmail.com",
-        "name": "Joy Mukami",
-        "phone": "0712345678",
-        "organization": "Mespt",
-        "category": "staff",
-        "created_at": "2025-09-25 14:43:18"
-    },
-    {
-        "type": "single",
-        "email": "ejuma@mespt.org",
-        "name": "Joy Mukami",
-        "phone": "0712345678",
-        "organization": "Mespt",
-        "category": "sponsor",
-        "created_at": "2025-09-25 14:52:29"
+        "created_at": "2025-09-26 07:27:42"
     }
 ]

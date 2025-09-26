@@ -68,25 +68,25 @@
 
       <form id="multipleForm">
       <div class="form-group">
-        <label>Primary Email:</label>
-        <input type="email" id="primaryEmail" required>
+        <label for="primaryEmail">Primary Email:</label>
+        <input type="email" id="primaryEmail" name="primaryEmail" autocomplete="email" required>
       </div>
       <div id="primaryDetails" style="display:none;">
         <div class="form-group">
-          <label>Primary Full Name:</label>
-          <input type="text" id="primaryName" placeholder="Enter full name">
+          <label for="primaryName">Primary Full Name:</label>
+          <input type="text" id="primaryName" name="primaryName" autocomplete="name" placeholder="Enter full name" required>
         </div>
         <div class="form-group">
-          <label>Primary Phone:</label>
-          <input type="tel" id="primaryPhone" placeholder="Enter phone number">
+          <label for="primaryPhone">Primary Phone:</label>
+          <input type="tel" id="primaryPhone" name="primaryPhone" autocomplete="tel" placeholder="Enter phone number" required>
         </div>
         <div class="form-group">
-          <label>Primary Organization:</label>
-          <input type="text" id="primaryOrganization" placeholder="Enter organization name">
+          <label for="primaryOrganization">Primary Organization:</label>
+          <input type="text" id="primaryOrganization" name="primaryOrganization" autocomplete="organization" placeholder="Enter organization name" required>
         </div>
         <div class="form-group">
-          <label>Primary Category:</label>
-          <select id="primaryCategory">
+          <label for="primaryCategory">Primary Category:</label>
+          <select id="primaryCategory" name="primaryCategory" required>
             <option value="" disabled selected>Select category</option>
             <option value="attendee">Attendee</option>
             <option value="speaker">Speaker</option>
@@ -146,7 +146,7 @@
       try {
         const img = new Image();
         img.crossOrigin = 'anonymous';
-        img.src = '/Registration/mespt_logo.png'; // ensure correct absolute path under XAMPP
+        img.src = './Mespt_logo.png'; // Using relative path to the logo in the same directory
         await new Promise((resolve, reject) => {
           img.onload = resolve;
           img.onerror = reject;
@@ -174,7 +174,6 @@
       doc.text(`Name: ${bp.name || ''}`, 14, oy + 20);
       doc.text(`Email: ${bp.email || ''}`, 14, oy + 26);
       doc.text(`Organization: ${bp.organization || ''}`, 14, oy + 32);
-
 
       // Pricing map (KSh)
       const feeMap = { attendee: 20, staff: 30, speaker: 40, sponsor: 50 };
@@ -235,8 +234,42 @@
       doc.setFontSize(10);
       doc.text('Thank you for registering.', 14, y);
 
-      const name = (p.name || 'invoice').replace(/[^a-z0-9-_]+/gi,'_');
-      doc.save(`${invNo}-${name}.pdf`);
+      // Create a Blob from the PDF
+      const pdfBlob = doc.output('blob');
+      const fileName = `${invNo}-${(payload.primary.name || 'invoice').replace(/[^a-z0-9-_]+/gi,'_')}.pdf`;
+      const pdfFile = new File([pdfBlob], fileName, { type: 'application/pdf' });
+
+      console.log("Sending form data with file:", pdfFile);
+
+      // Build FormData for send_invoice.php
+      const formData = new FormData();
+      formData.append('email', payload.primary.email);   // recipient
+      formData.append('name', payload.primary.name);     // name
+      formData.append('invoice_number', invNo);          // optional
+      formData.append('pdf', pdfFile);                   // the file itself
+
+      try {
+        const res = await fetch('send_invoice.php', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          console.log("Invoice emailed:", data);
+          alert(`Invoice sent to ${payload.primary.email}`);
+        } else {
+          console.error("Error from server:", data);
+          // Fall back to saving the PDF if email fails
+          doc.save(fileName);
+          alert(`Failed to send invoice: ${data.error || 'Unknown error'}. PDF has been downloaded instead.`);
+        }
+      } catch (err) {
+        console.error("Network or server error:", err);
+        // Fall back to saving the PDF if there's an error
+        doc.save(fileName);
+        alert("Could not send invoice. PDF has been downloaded instead.");
+      }
     }
 
     function updateAddBtnState() {
@@ -282,19 +315,20 @@
       }
       const div = document.createElement('div');
       div.classList.add('email-entry');
+      const entryId = 'entry_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
       div.innerHTML = `
-        <input type=\"email\" placeholder=\"Enter email\" required>
-        <input type=\"text\" placeholder=\"Full Name\" required>
-        <input type=\"tel\" placeholder=\"Phone\" required>
-        <div class=\"static-field org-static\"></div>
-        <select required>
-          <option value=\"\" disabled selected>Select category</option>
-          <option value=\"attendee\">Attendee</option>
-          <option value=\"speaker\">Speaker</option>
-          <option value=\"sponsor\">Sponsor</option>
-          <option value=\"staff\">Staff</option>
+        <input type="email" id="${entryId}_email" name="additionalEmails[]" placeholder="Enter email" autocomplete="email" required>
+        <input type="text" id="${entryId}_name" name="additionalNames[]" placeholder="Full Name" autocomplete="name" required>
+        <input type="tel" id="${entryId}_phone" name="additionalPhones[]" placeholder="Phone" autocomplete="tel" required>
+        <div class="static-field org-static"></div>
+        <select id="${entryId}_category" name="additionalCategories[]" required>
+          <option value="" disabled selected>Select category</option>
+          <option value="attendee">Attendee</option>
+          <option value="speaker">Speaker</option>
+          <option value="sponsor">Sponsor</option>
+          <option value="staff">Staff</option>
         </select>
-        <input type=\"hidden\" class=\"org-hidden\" name=\"organization[]\" value=\"\">
+        <input type="hidden" class="org-hidden" name="organization[]" value="">
       `;
       document.getElementById('emails').appendChild(div);
       // After adding, sync organization value and lock editing
