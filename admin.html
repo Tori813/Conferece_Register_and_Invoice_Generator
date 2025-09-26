@@ -30,6 +30,19 @@
     .muted { color: var(--muted); }
     .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; background: #eef2ff; color: #3730a3; }
     .empty { text-align: center; padding: 24px; color: var(--muted); }
+    .payment-status {
+      padding: 4px 8px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: white;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .payment-status:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+    }
   </style>
 </head>
 <body>
@@ -64,6 +77,7 @@
               <th>Phone</th>
               <th>Organization</th>
               <th>Category</th>
+              <th>Payment Status</th>
               <th class="muted">Created</th>
             </tr>
           </thead>
@@ -121,6 +135,12 @@
           <td>${escapeHtml(r.phone || '')}</td>
           <td>${escapeHtml(r.organization || '')}</td>
           <td>${escapeHtml(r.category || '')}</td>
+          <td>
+            <select class="payment-status" data-email="${escapeHtml(r.email || '')}">
+              <option value="unpaid" ${(r.payment_status || 'unpaid') === 'unpaid' ? 'selected' : ''}>Unpaid</option>
+              <option value="paid" ${(r.payment_status || 'unpaid') === 'paid' ? 'selected' : ''}>Paid</option>
+            </select>
+          </td>
           <td class="muted">${escapeHtml(r.created_at || '')}</td>
         </tr>
       `).join('');
@@ -139,8 +159,23 @@
       render(filtered);
     }
 
+    async function savePaymentStatus(email, status) {
+      try {
+        await fetch('update_payment_status.php', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email, status })
+        });
+      } catch (e) {
+        console.error('Failed to update payment status:', e);
+        alert('Failed to update payment status. Please try again.');
+      }
+    }
+
     function exportCSV() {
-      const headers = ['Type','Name','Email','Phone','Organization','Category','Created At'];
+      const headers = ['Type','Name','Email','Phone','Organization','Category','Payment Status','Created At'];
       const rows = Array.from(document.querySelectorAll('#tbody tr'))
         .filter(tr => !tr.querySelector('.empty'))
         .map(tr => Array.from(tr.children).map(td => td.textContent));
@@ -172,6 +207,15 @@
     document.getElementById('categoryFilter').addEventListener('change', filterRows);
     document.getElementById('exportBtn').addEventListener('click', exportCSV);
     document.getElementById('refreshBtn').addEventListener('click', load);
+    
+    // Handle payment status changes
+    document.addEventListener('change', (e) => {
+      if (e.target.classList.contains('payment-status')) {
+        const email = e.target.dataset.email;
+        const status = e.target.value;
+        savePaymentStatus(email, status);
+      }
+    });
 
     async function load() {
       try {
@@ -188,6 +232,7 @@
               phone: rec.phone || '',
               organization: rec.organization || '',
               category: rec.category || '',
+              payment_status: rec.payment_status || 'unpaid',
               created_at: rec.created_at || ''
             });
           } else if (rec.type === 'multiple') {
