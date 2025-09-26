@@ -1,33 +1,12 @@
 <?php
-// Debug mode - show all errors
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-ini_set('log_errors', 1);
-ini_set('error_log', __DIR__ . '/php_errors.log');
-header('Content-Type: text/plain'); // force plain text for debugging
+// Load configuration and bootstrap
+require_once __DIR__ . '/bootstrap.php';
 
-// Debug output - show POST and FILES data
-if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') {
-    echo "=== DEBUG OUTPUT ===\n\n";
-    echo "POST data:\n";
-    var_dump($_POST);
-    echo "\nFILES data:\n";
-    var_dump($_FILES);
-    
-    // Uncomment the line below to stop execution here and see the debug output
-    // exit;
-}
-
-echo "\n\n=== NORMAL OUTPUT ===\n\n";
-
-// Ensure no output before headers
-if (ob_get_level()) ob_end_clean();
-
-// Enable CORS and set JSON headers
+// Set headers for API response
+header('Content-Type: application/json; charset=UTF-8');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
-header('Content-Type: application/json; charset=UTF-8');
 
 // Function to send JSON response and exit
 function sendJsonResponse($data, $statusCode = 200) {
@@ -42,79 +21,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
+// Debug output - show POST and FILES data (only in development)
+if (config('app.debug') && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    error_log("=== DEBUG OUTPUT ===\n");
+    error_log("POST data: " . print_r($_POST, true));
+    error_log("FILES data: " . print_r($_FILES, true));
+}
+
 // Set error handler to catch all errors and exceptions
 set_error_handler(function($errno, $errstr, $errfile, $errline) {
     error_log("PHP Error [$errno] $errstr in $errfile on line $errline");
-    sendJsonResponse(['error' => 'An internal server error occurred'], 500);
+    if (config('app.debug')) {
+        sendJsonResponse([
+            'error' => 'An internal server error occurred',
+            'message' => $errstr,
+            'file' => $errfile,
+            'line' => $errline
+        ], 500);
+    } else {
+        sendJsonResponse(['error' => 'An internal server error occurred'], 500);
+    }
 });
 
 set_exception_handler(function($e) {
     error_log("PHP Exception: " . $e->getMessage() . " in " . $e->getFile() . " on line " . $e->getLine());
     sendJsonResponse(['error' => 'An unexpected error occurred'], 500);
 });
-
-require __DIR__ . '/vendor/autoload.php';
+require_once __DIR__ . '/vendor/autoload.php';
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-// Try to load environment variables if Dotenv is available
-$envFile = __DIR__ . '/.env';
-$envVars = [];
-
-// Check if .env file exists
-if (file_exists($envFile)) {
-    // Parse .env file manually as a fallback
-    $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-    foreach ($lines as $line) {
-        // Skip comments
-        if (strpos(trim($line), '#') === 0) {
-            continue;
-        }
-        
-        // Parse name=value pairs
-        if (strpos($line, '=') !== false) {
-            list($name, $value) = explode('=', $line, 2);
-            $name = trim($name);
-            $value = trim($value, " \t\n\r\0\x0B\"'");
-            $envVars[$name] = $value;
-            $_ENV[$name] = $value;
-            putenv("$name=$value");
-        }
-    }
-}
-
-// Verify required environment variables are set
-$requiredEnvVars = [
-    'SMTP_HOST', 
-    'SMTP_PORT', 
-    'SMTP_USERNAME', 
-    'SMTP_PASSWORD', 
-    'SMTP_FROM_EMAIL', 
-    'SMTP_FROM_NAME'
-];
-
-$missingVars = [];
-foreach ($requiredEnvVars as $var) {
-    $value = getenv($var);
-    if ($value === false || $value === '') {
-        $missingVars[] = $var;
-    }
-}
-
-if (!empty($missingVars)) {
-    sendJsonResponse([
-        'error' => 'Missing required environment variables',
-        'missing' => $missingVars,
-        'available_vars' => array_keys($envVars)
-    ], 500);
-}
-
-// Handle OPTIONS request
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(204);
-    exit;
-}
+// Configuration is now handled by bootstrap.php
 
 // Validate request method
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -149,6 +87,7 @@ if (empty($_FILES['pdf'])) {
     ], 400);
 }
 
+// Check for upload errors
 if ($_FILES['pdf']['error'] !== UPLOAD_ERR_OK) {
     $errorMessages = [
         UPLOAD_ERR_INI_SIZE   => 'The uploaded file exceeds the upload_max_filesize directive in php.ini',
@@ -160,38 +99,73 @@ if ($_FILES['pdf']['error'] !== UPLOAD_ERR_OK) {
         UPLOAD_ERR_EXTENSION  => 'A PHP extension stopped the file upload'
     ];
 
-    $code = $_FILES['pdf']['error'];
-    $msg = $errorMessages[$code] ?? "Unknown upload error (code $code)";
+    $errorMessage = $errorMessages[$_FILES['pdf']['error']] ?? 'Unknown file upload error';
+    sendJsonResponse(['error' => 'File upload failed: ' . $errorMessage], 400);
+}
 
+// Get upload configuration
+$maxBytes = config('upload.max_size', config('app.max_upload_size', 5 * 1024 * 1024));
+$allowedTypes = config('upload.allowed_types', ['pdf']);
+$uploadDir = rtrim(config('upload.directory', 'uploads'), '/');
+
+// Ensure the upload directory exists
+if (!is_dir($uploadDir) && !mkdir($uploadDir, 0755, true)) {
+    sendJsonResponse(['error' => 'Failed to create upload directory'], 500);
+}
+
+// Verify the upload directory is writable
+if (!is_writable($uploadDir)) {
+    sendJsonResponse(['error' => 'Upload directory is not writable'], 500);
+}
+
+// File size validation
+$size = (int)($_FILES['pdf']['size'] ?? 0);
+if ($size <= 0 || $size > $maxBytes) {
+    $maxSizeMB = round($maxBytes / (1024 * 1024), 1);
     sendJsonResponse([
-        'error' => 'File upload failed',
-        'code' => $code,
-        'message' => $msg,
-        'debug' => $_FILES,
-        'php_ini' => [
-            'file_uploads' => ini_get('file_uploads'),
-            'upload_max_filesize' => ini_get('upload_max_filesize'),
-            'post_max_size' => ini_get('post_max_size'),
-            'upload_tmp_dir' => ini_get('upload_tmp_dir')
-        ]
+        'error' => sprintf('File size must be between 1 byte and %s MB', $maxSizeMB)
     ], 400);
 }
 
-// Create uploads directory if it doesn't exist
-$uploadDir = __DIR__ . '/uploads';
-if (!is_dir($uploadDir)) {
-    if (!mkdir($uploadDir, 0755, true)) {
-        sendJsonResponse(['error' => 'Failed to create uploads directory'], 500);
-    }
+// File type validation
+$fileInfo = new finfo(FILEINFO_MIME_TYPE);
+$mimeType = $fileInfo->file($_FILES['pdf']['tmp_name']);
+
+// Map MIME types to file extensions
+$mimeToExt = [
+    'application/pdf' => 'pdf',
+    'image/png' => 'png',
+    'image/jpeg' => 'jpg',
+    'image/jpg' => 'jpg',
+];
+
+// Get file extension from MIME type
+$fileExt = $mimeToExt[$mimeType] ?? null;
+
+// Check if the file type is allowed
+if (!$fileExt || !in_array($fileExt, $allowedTypes, true)) {
+    sendJsonResponse([
+        'error' => sprintf('Invalid file type. Allowed types: %s', implode(', ', $allowedTypes))
+    ], 400);
 }
 
-// Validate and move uploaded file
-$fileName = basename($_FILES['pdf']['name']);
-$targetPath = $uploadDir . '/' . $fileName;
+// Generate a secure filename
+$filename = sprintf(
+    '%s_%s.%s',
+    'invoice',
+    bin2hex(random_bytes(8)),
+    $fileExt
+);
 
+$targetPath = $uploadDir . '/' . $filename;
+
+// Move the uploaded file to the target location
 if (!move_uploaded_file($_FILES['pdf']['tmp_name'], $targetPath)) {
     sendJsonResponse(['error' => 'Failed to save uploaded file'], 500);
 }
+
+// Set proper permissions on the uploaded file
+chmod($targetPath, 0644);
 
 // Check for required fields
 $required = ['email', 'pdf'];
@@ -214,74 +188,8 @@ if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
     sendJsonResponse(['error' => 'Invalid email address format'], 400);
 }
 
-// Load environment variables from .env if present
-try {
-    // Check if .env file exists
-    $envFile = __DIR__ . '/.env';
-    if (!file_exists($envFile)) {
-        throw new Exception('Configuration file (.env) not found. Please create one based on .env.example');
-    }
-    
-    // Load .env file
-    $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
-    $dotenv->load();
-    
-    // Load environment variables
-    $dotenv->required([
-        'SMTP_HOST',
-        'SMTP_PORT',
-        'SMTP_USERNAME',
-        'SMTP_PASSWORD',
-        'SMTP_FROM_EMAIL',
-        'SMTP_FROM_NAME'
-    ]);
-    
-    // Validate required environment variables
-    $requiredEnvVars = [
-        'SMTP_HOST' => 'SMTP server host',
-        'SMTP_PORT' => 'SMTP server port',
-        'SMTP_USERNAME' => 'SMTP username',
-        'SMTP_PASSWORD' => 'SMTP password',
-        'SMTP_FROM_EMAIL' => 'Sender email address',
-        'SMTP_FROM_NAME' => 'Sender name'
-    ];
-    
-    $missingVars = [];
-    $invalidVars = [];
-    
-    foreach ($requiredEnvVars as $var => $description) {
-        $value = $_ENV[$var] ?? getenv($var);
-        if ($value === false || $value === '') {
-            $missingVars[] = "$var ($description)";
-        } elseif ($var === 'SMTP_PORT' && (!is_numeric($value) || $value <= 0 || $value > 65535)) {
-            $invalidVars[] = "$var: Port must be between 1 and 65535";
-        } elseif ($var === 'SMTP_FROM_EMAIL' && !filter_var($value, FILTER_VALIDATE_EMAIL)) {
-            $invalidVars[] = "$var: Invalid email format";
-        }
-    }
-    
-    $errors = [];
-    if (!empty($missingVars)) {
-        $errors[] = 'Missing required environment variables: ' . implode(', ', $missingVars);
-    }
-    if (!empty($invalidVars)) {
-        $errors[] = 'Invalid environment variables: ' . implode('; ', $invalidVars);
-    }
-    
-    if (!empty($errors)) {
-        throw new Exception(implode('; ', $errors));
-    }
-    
-} catch (Exception $e) {
-    error_log('Configuration error: ' . $e->getMessage());
-    sendJsonResponse([
-        'error' => 'Server configuration error',
-        'details' => $e->getMessage()
-    ], 500);
-}
-
 // File size validation
-$maxBytes = (int)(getenv('MAX_UPLOAD_BYTES') ?: 5 * 1024 * 1024); // default 5MB
+$maxBytes = config('app.max_upload_size', 5 * 1024 * 1024); // default 5MB
 $size = (int)($_FILES['pdf']['size'] ?? 0);
 
 if ($size <= 0 || $size > $maxBytes) {
@@ -324,39 +232,52 @@ try {
     
     // Configure SMTP
     $mail->isSMTP();
-    $mail->Host = $_ENV['SMTP_HOST'];
+    $mail->Host = config('smtp.host');
     $mail->SMTPAuth = true;
-    $mail->Username = $_ENV['SMTP_USERNAME'];
-    $mail->Password = $_ENV['SMTP_PASSWORD'];
-    $mail->SMTPSecure = strtolower($_ENV['SMTP_SECURE'] ?? 'tls');
-    $mail->Port = (int)$_ENV['SMTP_PORT'];
+    $mail->Username = config('smtp.username');
+    $mail->Password = config('smtp.password');
+    $mail->SMTPSecure = strtolower(config('smtp.secure', 'tls'));
+    $mail->Port = (int)config('smtp.port');
     
-    // Enable debug output
-    $mail->SMTPDebug = 2; // 2 = client and server messages
-    $mail->Debugoutput = function($str, $level) {
-        error_log("PHPMailer: $str");
-    };
+    // Enable debug output if debug mode is on
+    if (config('app.debug')) {
+        $mail->SMTPDebug = 2;  // Enable verbose debug output
+        $mail->Debugoutput = function($str, $level) {
+            error_log("PHPMailer: $str");
+        };
+    }
     
-    // Sender and recipient
-    $mail->setFrom($_ENV['SMTP_FROM_EMAIL'], $_ENV['SMTP_FROM_NAME']);
-    $mail->addAddress($_POST['email'], $_POST['name'] ?? '');
+    // Sender
+    $mail->setFrom(
+        config('smtp.from_email'),
+        config('smtp.from_name')
+    );
+    
+    // Recipient
+    $mail->addAddress($email, $name);
+    
+    // Add CC recipients from config
+    $ccRecipients = config('cc_recipients', []);
+    foreach ($ccRecipients as $recipient) {
+        if (is_array($recipient) && !empty($recipient['email'])) {
+            $mail->addCC(
+                $recipient['email'],
+                $recipient['name'] ?? ''
+            );
+        }
+    }
     
     // Email content
     $mail->isHTML(true);
     $mail->Subject = 'Your Conference Registration Invoice';
     $mail->Body = sprintf(
         'Hello <b>%s</b>,<br><br>Thank you for registering for the conference.<br>Your invoice is attached.<br><br>Best regards,<br>%s',
-        htmlspecialchars($_POST['name'] ?? 'there', ENT_QUOTES, 'UTF-8'),
-        htmlspecialchars($_ENV['SMTP_FROM_NAME'], ENT_QUOTES, 'UTF-8')
+        htmlspecialchars($name ?? 'there', ENT_QUOTES, 'UTF-8'),
+        htmlspecialchars(config('smtp.from_name'), ENT_QUOTES, 'UTF-8')
     );
     
     // Attach the PDF
     $mail->addAttachment($targetPath, 'invoice.pdf');
-    
-    $mail->SMTPDebug = 3; // or 4 for even more detail
-$mail->Debugoutput = function($str, $level) {
-    error_log("SMTP Debug: $str");
-};
     // Send the email
     if ($mail->send()) {
         // Clean up the uploaded file after sending

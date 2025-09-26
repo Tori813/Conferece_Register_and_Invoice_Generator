@@ -1,0 +1,82 @@
+# Enable rewrite engine
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Redirect to HTTPS if not already
+    # Uncomment the following lines if you have SSL configured
+    # RewriteCond %{HTTPS} off
+    # RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+    
+    # Prevent directory listing
+    Options -Indexes
+    
+    # Handle Authorization Header
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule ^ - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+    
+    # Handle Front Controller
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ index.php [L]
+</IfModule>
+
+# Security Headers
+<IfModule mod_headers.c>
+    # Protect against XSS attacks
+    Header set X-XSS-Protection "1; mode=block"
+    
+    # Prevent MIME-type sniffing
+    Header set X-Content-Type-Options "nosniff"
+    
+    # Protect against clickjacking
+    Header always append X-Frame-Options SAMEORIGIN
+    
+    # Enable HSTS (uncomment if you have SSL)
+    # Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+    
+    # Content Security Policy (adjust as needed)
+    # Header set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' https: data:;"
+</IfModule>
+
+# PHP Settings
+<IfModule mod_php7.c>
+    # Error reporting
+    php_flag display_errors off
+    php_value error_reporting E_ALL
+    php_flag log_errors on
+    php_value error_log php_errors.log
+    
+    # Security settings
+    php_flag expose_php off
+    php_flag session.cookie_httponly on
+    php_flag session.cookie_secure 0  # Set to 1 if using HTTPS
+    php_flag session.use_strict_mode on
+    php_flag session.use_only_cookies 1
+    
+    # File upload settings
+    php_value upload_max_filesize 10M
+    php_value post_max_size 12M
+    php_value max_execution_time 300
+    php_value max_input_time 300
+</IfModule>
+
+# Disable server signature
+ServerSignature Off
+
+# Set default charset
+AddDefaultCharset UTF-8
+
+# Set timezone
+SetEnv TZ Africa/Nairobi
+
+# Protect sensitive files
+<FilesMatch "^(config\.php|bootstrap\.php|\.env|composer\.(json|lock)|package\.json|yarn\.lock|webpack\.config\.js|php\.ini|\.htaccess)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Allow access to specific file types
+<FilesMatch "\.(css|js|jpe?g|png|gif|ico|pdf|woff2?|ttf|eot|svg)$">
+    Order Allow,Deny
+    Allow from all
+</FilesMatch>

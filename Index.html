@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Choose Registration Type</title>
+  <style>
+    :root {
+      --bg: #f6f7fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --primary: #2563eb;
+      --primary-contrast: #ffffff;
+      --shadow: 0 10px 20px rgba(0,0,0,0.08), 0 6px 6px rgba(0,0,0,0.06);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, 'Apple Color Emoji', 'Segoe UI Emoji';
+      color: var(--text);
+      background: radial-gradient(1200px 600px at 10% -10%, #e8efff 0%, transparent 60%),
+                  radial-gradient(1000px 500px at 110% 10%, #eaf7ff 0%, transparent 60%),
+                  var(--bg);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 16px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1000px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .title {
+      margin: 0 0 8px;
+      font-size: 28px;
+      letter-spacing: 0.2px;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 20px;
+    }
+
+    @media (max-width: 720px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      border: 1px solid rgba(0,0,0,0.06);
+      display: flex;
+      flex-direction: column;
+      transition: transform 180ms ease, box-shadow 180ms ease;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 28px rgba(0,0,0,0.10), 0 10px 10px rgba(0,0,0,0.08);
+    }
+
+    .card-body {
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-height: 160px;
+    }
+
+    .card-title {
+      font-size: 18px;
+      margin: 0;
+    }
+
+    .card-text {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.5;
+      font-size: 14px;
+    }
+
+    .card-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 22px 22px;
+      margin-top: auto;
+      gap: 8px;
+    }
+
+    .btn {
+      appearance: none;
+      border: 0;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 160ms ease, transform 120ms ease, box-shadow 160ms ease;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: var(--primary-contrast);
+      box-shadow: 0 6px 14px rgba(37, 99, 235, 0.24);
+    }
+
+    .btn-primary:hover { filter: brightness(1.05); }
+    .btn-primary:active { transform: translateY(1px); }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--primary);
+    }
+
+    a { text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1 class="title">Choose Registration Type</h1>
+      <p class="subtitle">Select how you would like to register participants.</p>
+    </div>
+
+    <div class="grid">
+      <!-- Single Registration Card -->
+      <div class="card">
+        <div class="card-body">
+          <h2 class="card-title">Single Registration</h2>
+          <p class="card-text">Register one participant by providing their email, name, and phone. Ideal for individual sign-ups.</p>
+        </div>
+        <div class="card-actions">
+          <a class="btn btn-primary" href="SingleRegistration.html">Start Single Registration</a>
+        </div>
+      </div>
+
+      <!-- Multiple Registration Card -->
+      <div class="card">
+        <div class="card-body">
+          <h2 class="card-title">Multiple Registration</h2>
+          <p class="card-text">Register a group by entering a primary email and adding multiple participants with their details.</p>
+        </div>
+        <div class="card-actions">
+          <a class="btn btn-primary" href="MultipleRegistration.html">Start Multiple Registration</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
