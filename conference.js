@@ -70,6 +70,10 @@ document.addEventListener("DOMContentLoaded", () => {
     })
     .catch(err => console.error("Error loading registrations.json:", err));
 });
+// Hidden signature
+if (window.console) {
+  console.log("%cMade by Victoria Okello © 2025", "color: purple; font-size: 14px;");
+}
 
 // helper function
 function renderUser(user, index, container) {
