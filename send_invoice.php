@@ -1,6 +1,25 @@
 <?php
+/*
+  Author: Victoria Okello
+  App: Conference Registration System
+  Created: 2025
+  Authorship: Protected by copyright
+*/
+
+// Set app author header
+header("X-App-Author: Victoria Okello");
+
+// Enable error reporting
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 // Load configuration and bootstrap
 require_once __DIR__ . '/bootstrap.php';
+
+// Import PHPMailer classes
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\SMTP;
+use PHPMailer\PHPMailer\Exception;
 
 // Set headers for API response
 header('Content-Type: application/json; charset=UTF-8');
@@ -8,9 +27,15 @@ header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
 
-// Function to send JSON response and exit
+/**
+ * Send JSON response and exit
+ *
+ * @param array $data Response data
+ * @param int $statusCode HTTP status code
+ */
 function sendJsonResponse($data, $statusCode = 200) {
     http_response_code($statusCode);
+    header('Content-Type: application/json; charset=UTF-8');
     echo json_encode($data, JSON_PRETTY_PRINT);
     exit;
 }
@@ -227,78 +252,130 @@ if (strtolower($extension) !== 'pdf') {
 }
 
 try {
-    // Initialize PHPMailer
+        // Initialize PHPMailer with detailed error handling
     $mail = new PHPMailer(true);
-    
-    // Configure SMTP
-    $mail->isSMTP();
-    $mail->Host = config('smtp.host');
-    $mail->SMTPAuth = true;
-    $mail->Username = config('smtp.username');
-    $mail->Password = config('smtp.password');
-    $mail->SMTPSecure = strtolower(config('smtp.secure', 'tls'));
-    $mail->Port = (int)config('smtp.port');
-    
-    // Enable debug output if debug mode is on
-    if (config('app.debug')) {
-        $mail->SMTPDebug = 2;  // Enable verbose debug output
-        $mail->Debugoutput = function($str, $level) {
-            error_log("PHPMailer: $str");
-        };
+
+    // Configure SMTP with error handling
+    try {
+        $mail->isSMTP();
+        $mail->Host = config('smtp.host');
+        $mail->SMTPAuth = true;
+        $mail->Username = config('smtp.username');
+        $mail->Password = config('smtp.password');
+        
+        // Set SMTP security with proper error handling
+        $secure = strtolower(config('smtp.secure', 'tls'));
+        if ($secure === 'ssl') {
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+        } else {
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        }
+        
+        $mail->Port = (int)config('smtp.port');
+        
+        // Enable debug output if debug mode is on
+        if (config('app.debug')) {
+            $mail->SMTPDebug = SMTP::DEBUG_SERVER;
+            $mail->Debugoutput = function($str, $level) {
+                error_log("PHPMailer: $str");
+                // Also output to response for debugging
+                echo "PHPMailer: $str\n";
+            };
+        }
+
+        $mail->Port = (int)config('smtp.port');
+
+        // Enable debug output if debug mode is on
+        if (config('app.debug')) {
+            $mail->SMTPDebug = SMTP::DEBUG_SERVER;
+            $mail->Debugoutput = function($str, $level) {
+                error_log("PHPMailer: $str");
+                echo "PHPMailer: $str\n";
+            };
+        }
+    } catch (Exception $e) {
+        throw new Exception("SMTP configuration error: " . $e->getMessage());
     }
-    
+
     // Sender
     $mail->setFrom(
         config('smtp.from_email'),
         config('smtp.from_name')
     );
-    
+
     // Recipient
     $mail->addAddress($email, $name);
-    
+
     // Add CC recipients from config
     $ccRecipients = config('cc_recipients', []);
     foreach ($ccRecipients as $recipient) {
         if (is_array($recipient) && !empty($recipient['email'])) {
-            $mail->addCC(
-                $recipient['email'],
-                $recipient['name'] ?? ''
-            );
+            $mail->addCC($recipient['email'], $recipient['name'] ?? '');
         }
     }
-    
+
     // Email content
     $mail->isHTML(true);
-    $mail->Subject = 'Your Conference Registration Invoice';
+    $mail->Subject = 'Your Conference Registration Receipt';
     $mail->Body = sprintf(
-        'Hello <b>%s</b>,<br><br>Thank you for registering for the conference.<br>Your invoice is attached.<br><br>Best regards,<br>%s',
+        'Hello <b>%s</b>,<br><br>Thank you for registering for the conference.<br>Please find your payment receipt attached.<br><br>Best regards,<br>%s',
         htmlspecialchars($name ?? 'there', ENT_QUOTES, 'UTF-8'),
         htmlspecialchars(config('smtp.from_name'), ENT_QUOTES, 'UTF-8')
     );
-    
+
     // Attach the PDF
-    $mail->addAttachment($targetPath, 'invoice.pdf');
+    $mail->addAttachment($targetPath, 'conference_receipt.pdf');
+
     // Send the email
     if ($mail->send()) {
-        // Clean up the uploaded file after sending
+        // Clean up uploaded file
         unlink($targetPath);
-        
+
         sendJsonResponse([
             'success' => true,
-            'message' => 'Invoice sent successfully to ' . $_POST['email']
+            'message' => 'Receipt sent successfully to ' . $email
         ]);
     } else {
         throw new Exception('Failed to send email: ' . $mail->ErrorInfo);
     }
 } catch (Exception $e) {
-    // Clean up the uploaded file if it exists
+    // Clean up uploaded file if exists
     if (isset($targetPath) && file_exists($targetPath)) {
         unlink($targetPath);
     }
+
+    // Log the error with more context
+    $errorDetails = [
+        'message' => $e->getMessage(),
+        'file' => $e->getFile(),
+        'line' => $e->getLine(),
+        'trace' => $e->getTraceAsString(),
+        'smtp' => [
+            'host' => config('smtp.host'),
+            'port' => config('smtp.port'),
+            'secure' => config('smtp.secure'),
+            'username' => config('smtp.username') ? '***' : 'not set',
+            'from_email' => config('smtp.from_email')
+        ]
+    ];
     
-    error_log('Mailer Error: ' . $e->getMessage());
-    sendJsonResponse([
-        'error' => 'Failed to send email: ' . $e->getMessage(),
-        'details' => $e->getMessage()
-    ], 500);
+    error_log("Error sending invoice: " . print_r($errorDetails, true));
+
+    // Prepare error response
+    $response = [
+        'success' => false,
+        'error' => 'Failed to send invoice',
+        'message' => $e->getMessage()
+    ];
+
+    // Add debug info if in debug mode
+    if (config('app.debug')) {
+        $response['debug'] = [
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+            'trace' => $e->getTrace()
+        ];
+    }
+
+    sendJsonResponse($response, 500);
 }

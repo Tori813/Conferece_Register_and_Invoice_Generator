@@ -1,5 +1,13 @@
 <?php
+/*
+  Author: Victoria Okello
+  App: Conference Registration System
+  Created: 2025
+  Authorship: Protected by copyright
+*/
+
 // Set CORS headers
+header("X-App-Author: Victoria Okello");
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");

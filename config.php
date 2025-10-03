@@ -25,13 +25,13 @@ return [
         'port' => 587,
         
         // SMTP username (usually the email address)
-        'username' => 'your-email@gmail.com',
+        'username' => 'vaokello@gmail.com',
         
         // SMTP password (use an App Password for Gmail)
-        'password' => 'your-app-password',
+        'password' => 'odizryolxybtsgzf',
         
         // From email address (should match the username for most SMTP servers)
-        'from_email' => 'your-email@gmail.com',
+        'from_email' => 'vaokello@gmail.com',
         
         // From name (display name)
         'from_name' => 'Conference Registration',

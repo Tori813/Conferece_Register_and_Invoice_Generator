@@ -1,49 +1,37 @@
 [
     {
-        "type": "single",
-        "email": "vaokello@gmail.com",
-        "name": "Victoria Okello",
-        "phone": "0712345678",
-        "organization": "Mespt",
-        "category": "staff",
-        "created_at": "2025-09-26 10:07:14"
-    },
-    {
-        "type": "single",
-        "email": "victoriaokello4@gmail.com",
-        "name": "Victoria Okello",
-        "phone": "0712345678",
-        "organization": "Mespt",
-        "category": "sponsor",
-        "created_at": "2025-09-26 10:11:06"
-    },
-    {
         "type": "multiple",
         "primary": {
             "email": "vickydeluxe0@gmail.com",
-            "name": "Victoria Okello",
+            "firstName": "Victoria",
+            "surname": "Okello",
             "phone": "0712345678",
+            "position": "IT Officer",
             "organization": "Mespt",
-            "category": "speaker"
+            "category": "speaker",
+            "participantType": "residential",
+            "subTheme": "Gender Equality & Social Inclusion (GESI) + Disability - Youth & Future Market Systems Leadership \u2013 Christian Aid & Tanager",
+            "exhibitions": [
+                {
+                    "detail": "Chairs",
+                    "amount": "1500"
+                }
+            ],
+            "payment_status": "paid"
         },
         "additional": [
             {
-                "email": "vaokello@mespt.com",
-                "name": "Victoria",
+                "email": "b@gmail.com",
+                "name": "Bernard Navy",
+                "position": "Staff",
                 "phone": "0712345678",
                 "organization": "Mespt",
-                "category": "staff"
+                "category": "participant",
+                "participantType": "residential",
+                "subTheme": "",
+                "exhibitions": []
             }
         ],
-        "created_at": "2025-09-26 10:13:08"
-    },
-    {
-        "type": "single",
-        "email": "iamjumaemmanuel254@gmail.com",
-        "name": "Juma",
-        "phone": "0712345678",
-        "organization": "Mespt",
-        "category": "sponsor",
-        "created_at": "2025-09-26 10:22:41"
+        "created_at": "2025-10-03 09:06:59"
     }
 ]

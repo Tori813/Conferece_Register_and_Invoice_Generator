@@ -38,11 +38,11 @@ A web application for managing conference registrations and generating invoices 
      <?php
      return [
          'smtp' => [
-             'host' => 'your-smtp-host.com',
+             'host' => 'smtp.gmail.com',
              'port' => 587,
-             'username' => 'your-email@example.com',
-             'password' => 'your-email-password',
-             'from_email' => 'noreply@example.com',
+             'username' => 'vaokello@gmail.com',
+             'password' => 'odizryolxybtsgzf',
+             'from_email' => 'vaokello@gmail.com',
              'from_name' => 'Conference Registration',
              'secure' => 'tls',
              'debug' => 0

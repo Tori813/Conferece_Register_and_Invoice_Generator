@@ -1,89 +1,97 @@
 <?php
 /**
- * Bootstrap File
- * 
- * This file loads the configuration and defines helper functions.
+ * Bootstrap file for app configuration
+ * Prevents multiple inclusions and redeclaration errors
  */
 
-// Load base configuration
-$config = require __DIR__ . '/config.php';
+// Enable error reporting
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
-// Load local configuration if it exists
-$localConfigFile = __DIR__ . '/config.local.php';
-if (file_exists($localConfigFile)) {
-    $localConfig = require $localConfigFile;
-    
-    // Merge configurations recursively
-    $config = array_replace_recursive($config, $localConfig);
-    
-    // Special handling for numeric arrays to avoid merging issues
-    if (isset($localConfig['cc_recipients'])) {
-        $config['cc_recipients'] = $localConfig['cc_recipients'];
-    }
+if (defined('BOOTSTRAP_ALREADY_LOADED')) {
+    return;
+}
+define('BOOTSTRAP_ALREADY_LOADED', true);
+
+// Load Composer autoload if available
+if (file_exists(__DIR__ . '/vendor/autoload.php')) {
+    require_once __DIR__ . '/vendor/autoload.php';
 }
 
-// Ensure required configuration sections exist
-$requiredSections = ['smtp', 'app'];
-foreach ($requiredSections as $section) {
-    if (!isset($config[$section])) {
-        throw new RuntimeException("Missing required configuration section: {$section}");
-    }
-}
+// Import PHPMailer classes after autoloader is available
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\SMTP;
+use PHPMailer\PHPMailer\Exception;
 
-// Set default values for required SMTP settings
-$requiredSmtpSettings = ['host', 'port', 'username', 'password', 'from_email', 'from_name'];
-foreach ($requiredSmtpSettings as $setting) {
-    if (!isset($config['smtp'][$setting])) {
-        throw new RuntimeException("Missing required SMTP setting: {$setting}");
-    }
-}
 
 /**
- * Get a configuration value using dot notation
- * 
- * @param string $key Dot notation key (e.g., 'smtp.host')
- * @param mixed $default Default value if key doesn't exist
- * @return mixed
+ * Global config() helper
+ * Loads config.php once and caches values
  */
-function config($key, $default = null) {
-    global $config;
-    $keys = explode('.', $key);
-    $value = $config;
-    
-    foreach ($keys as $k) {
-        if (!isset($value[$k])) {
-            return $default;
+if (!function_exists('config')) {
+    function config(string $key, $default = null) {
+        static $settings = null;
+
+        if ($settings === null) {
+            $configFile = __DIR__ . '/config.php';
+            if (!file_exists($configFile)) {
+                throw new Exception("Missing config.php in " . __DIR__);
+            }
+            $settings = require $configFile;
+            
+            // Load local config if exists
+            $localConfigFile = __DIR__ . '/config.local.php';
+            if (file_exists($localConfigFile)) {
+                $localConfig = require $localConfigFile;
+                $settings = array_replace_recursive($settings, $localConfig);
+            }
+            
+            if (!is_array($settings)) {
+                throw new Exception("config.php must return an array");
+            }
+            
+            // Set error reporting based on debug mode
+            $debug = $settings['app']['debug'] ?? false;
+            if ($debug) {
+                error_reporting(E_ALL);
+                ini_set('display_errors', 1);
+                ini_set('log_errors', 1);
+                ini_set('error_log', __DIR__ . '/php_errors.log');
+            } else {
+                error_reporting(0);
+                ini_set('display_errors', 0);
+            }
+            
+            // Set default timezone
+            date_default_timezone_set($settings['app']['timezone'] ?? 'UTC');
         }
-        $value = $value[$k];
+
+        $keys = explode('.', $key);
+        $value = $settings;
+        
+        foreach ($keys as $k) {
+            if (!isset($value[$k])) {
+                return $default;
+            }
+            $value = $value[$k];
+        }
+        
+        return $value;
     }
-    
-    return $value;
 }
 
 // Set environment variables for backward compatibility
-putenv('SMTP_HOST=' . config('smtp.host'));
-putenv('SMTP_PORT=' . config('smtp.port'));
-putenv('SMTP_USERNAME=' . config('smtp.username'));
-putenv('SMTP_PASSWORD=' . config('smtp.password'));
-putenv('SMTP_FROM_EMAIL=' . config('smtp.from_email'));
-putenv('SMTP_FROM_NAME=' . config('smtp.from_name'));
-putenv('SMTP_SECURE=' . config('smtp.secure'));
-putenv('SMTP_DEBUG=' . config('smtp.debug'));
-putenv('APP_ENV=' . config('app.env'));
-putenv('APP_DEBUG=' . (config('app.debug') ? 'true' : 'false'));
-putenv('TIMEZONE=' . config('app.timezone'));
-putenv('MAX_UPLOAD_BYTES=' . config('app.max_upload_size'));
-
-// Set default timezone
-date_default_timezone_set(config('app.timezone', 'UTC'));
-
-// Set error reporting based on debug mode
-if (config('app.debug')) {
-    error_reporting(E_ALL);
-    ini_set('display_errors', 1);
-    ini_set('log_errors', 1);
-    ini_set('error_log', __DIR__ . '/php_errors.log');
-} else {
-    error_reporting(0);
-    ini_set('display_errors', 0);
+if (!getenv('SMTP_HOST')) {
+    putenv('SMTP_HOST=' . config('smtp.host'));
+    putenv('SMTP_PORT=' . config('smtp.port'));
+    putenv('SMTP_USERNAME=' . config('smtp.username'));
+    putenv('SMTP_PASSWORD=' . config('smtp.password'));
+    putenv('SMTP_FROM_EMAIL=' . config('smtp.from_email'));
+    putenv('SMTP_FROM_NAME=' . config('smtp.from_name'));
+    putenv('SMTP_SECURE=' . (config('smtp.secure') ?: 'tls'));
+    putenv('SMTP_DEBUG=' . (config('smtp.debug') ? '1' : '0'));
+    putenv('APP_ENV=' . (config('app.env') ?: 'production'));
+    putenv('APP_DEBUG=' . (config('app.debug') ? 'true' : 'false'));
+    putenv('TIMEZONE=' . (config('app.timezone') ?: 'UTC'));
+    putenv('MAX_UPLOAD_BYTES=' . (config('app.max_upload_size') ?: '5242880'));
 }

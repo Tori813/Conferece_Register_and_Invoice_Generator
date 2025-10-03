@@ -9,11 +9,11 @@
 return [
     // SMTP Settings
     'smtp' => [
-        'host' => 'smtp.example.com',
+        'host' => 'smtp.gmail.com',
         'port' => 587,
-        'username' => 'your-email@example.com',
-        'password' => 'your-email-password',
-        'from_email' => 'noreply@example.com',
+        'username' => 'vaokello@gmail.com',
+        'password' => 'odizryolxybtsgzf',
+        'from_email' => 'vaokello@gmail.com',
         'from_name' => 'Conference Registration',
         'secure' => 'tls', // tls or ssl
         'debug' => 0, // 0 = off, 1 = client messages, 2 = client and server messages

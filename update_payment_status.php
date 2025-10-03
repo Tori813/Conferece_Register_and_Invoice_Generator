@@ -24,28 +24,48 @@ if (file_exists($registrationsFile)) {
 // Find and update the registration
 $updated = false;
 foreach ($registrations as &$registration) {
-    if ($registration['email'] === $email) {
+    // Handle single registration
+    if ($registration['type'] === 'single' && $registration['email'] === $email) {
         $registration['payment_status'] = $status;
         $updated = true;
         break;
-    } elseif ($registration['type'] === 'multiple' && $registration['primary']['email'] === $email) {
-        $registration['primary']['payment_status'] = $status;
-        $updated = true;
-        break;
-    } elseif ($registration['type'] === 'multiple' && !empty($registration['additional'])) {
-        foreach ($registration['additional'] as &$additional) {
-            if ($additional['email'] === $email) {
-                $additional['payment_status'] = $status;
-                $updated = true;
-                break 2;
+    } 
+    // Handle multiple registrations
+    elseif ($registration['type'] === 'multiple') {
+        // Check primary registrant
+        if (isset($registration['primary']) && $registration['primary']['email'] === $email) {
+            $registration['primary']['payment_status'] = $status;
+            $updated = true;
+            break;
+        }
+        // Check additional registrants
+        if (!empty($registration['additional'])) {
+            foreach ($registration['additional'] as &$additional) {
+                if ($additional['email'] === $email) {
+                    $additional['payment_status'] = $status;
+                    $updated = true;
+                    break 2;
+                }
             }
         }
     }
 }
 
 if ($updated) {
-    // Save the updated registrations
-    file_put_contents($registrationsFile, json_encode($registrations, JSON_PRETTY_PRINT));
+    // Save the updated registrations with file locking to prevent corruption
+    $tempFile = tempnam(dirname($registrationsFile), 'reg');
+    if (file_put_contents($tempFile, json_encode($registrations, JSON_PRETTY_PRINT)) !== false) {
+        // Use rename for atomic update
+        if (rename($tempFile, $registrationsFile)) {
+            chmod($registrationsFile, 0666); // Ensure proper permissions
+        } else {
+            unlink($tempFile); // Clean up temp file if rename fails
+            throw new Exception('Failed to update registrations file');
+        }
+    } else {
+        unlink($tempFile); // Clean up temp file if write fails
+        throw new Exception('Failed to write to temporary file');
+    }
     echo json_encode(['success' => true]);
 } else {
     http_response_code(404);

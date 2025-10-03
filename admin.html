@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Registrations Admin</title>
   <style>
+    
     :root {
       --bg: #f6f7fb;
       --card: #ffffff;
@@ -16,32 +17,275 @@
     }
 
     body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial; background: var(--bg); color: var(--text); }
-    .container { max-width: 1100px; margin: 32px auto; padding: 0 16px; }
-    .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow); padding: 18px; }
-    h1 { margin: 0 0 14px; font-size: 24px; }
-
-    .controls { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 10px; margin-bottom: 12px; }
+    .container { width: 100%; margin: 0; padding: 16px; box-sizing: border-box; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; box-shadow: var(--shadow); padding: 16px; width: 100%; box-sizing: border-box; }
+    .controls { 
+      display: grid; 
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 10px; 
+      margin-bottom: 16px;
+      align-items: end;
+    }
+    
+    @media (max-width: 768px) {
+      .controls {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .controls {
+        grid-template-columns: 1fr;
+      }
+    }
     .controls input, .controls select, .controls button { height: 38px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 10px; }
     .controls button { background: var(--primary); color: #fff; font-weight: 600; cursor: pointer; }
 
-    table { width: 100%; border-collapse: collapse; }
-    th, td { text-align: left; padding: 10px; border-bottom: 1px solid #eee; font-size: 14px; }
-    th { background: #f9fafb; font-weight: 600; }
-    .muted { color: var(--muted); }
-    .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; background: #eef2ff; color: #3730a3; }
-    .empty { text-align: center; padding: 24px; color: var(--muted); }
-    .payment-status {
-      padding: 4px 8px;
-      border: 1px solid var(--border);
-      border-radius: 6px;
+    .table-wrap {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      margin: 16px 0 0 0;
+      padding: 0 0 8px 0; /* Add bottom padding for scrollbar */
+      box-sizing: border-box;
+      position: relative;
       background: white;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      /* Custom scrollbar */
+      scrollbar-width: thin;
+      scrollbar-color: #c1c1c1 #f1f1f1;
+    }
+    
+    /* Webkit scrollbar */
+    .table-wrap::-webkit-scrollbar {
+      height: 10px;
+    }
+    
+    .table-wrap::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 0 0 4px 4px;
+    }
+    
+    .table-wrap::-webkit-scrollbar-thumb {
+      background: #c1c1c1;
+      border-radius: 4px;
+    }
+    
+    .table-wrap::-webkit-scrollbar-thumb:hover {
+      background: #a8a8a8;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: auto;
       font-size: 13px;
-      cursor: pointer;
+      margin: 0;
+      min-width: 100%;
+    }
+    
+    /* Visual indicator for horizontal scrolling */
+    .scroll-hint {
+      position: sticky;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary) 0%, var(--primary) 50%, transparent 50%, transparent 100%);
+      background-size: 20px 100%;
+      opacity: 0.3;
+      margin-top: 4px;
+      display: none;
+    }
+    
+    @media (hover: hover) {
+      .table-wrap:hover .scroll-hint {
+        display: block;
+      }
+    }
+    
+    thead {
+      display: table;
+      width: 100%;
+      table-layout: fixed;
+    }
+    
+    tbody {
+      display: block;
+      overflow-y: auto;
+      width: 100%;
+    }
+    
+    tr {
+      display: table;
+      width: 100%;
+      table-layout: fixed;
+    }
+    
+    th, td {
+      text-align: left;
+      padding: 8px 10px;
+      border-bottom: 1px solid #eee;
+      word-wrap: break-word;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      vertical-align: middle;
+      line-height: 1.3;
+      box-sizing: border-box;
+    }
+    
+    td {
+      background: white;
+      transition: all 0.3s ease;
+      position: relative;
+      z-index: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      cursor: default;
+    }
+    
+    tr:hover td {
+      background: #f8fafc;
+    }
+    
+    td.hoverable {
+      z-index: 1;
+    }
+    
+    td.hoverable:hover {
+      z-index: 10;
+      transform: translateY(-5px) scale(1.02);
+      box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+      background: white !important;
+      border-radius: 8px;
+      overflow: visible;
+      white-space: normal;
+      word-wrap: break-word;
+      max-width: 300px !important;
+      min-width: 150px !important;
+      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+    
+    td.hoverable::after {
+      content: '';
+      position: absolute;
+      bottom: -5px;
+      left: 0;
+      right: 0;
+      height: 5px;
+      background: transparent;
+      transition: all 0.3s ease;
+    }
+    
+    td.hoverable:hover::after {
+      background: var(--primary);
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    
+    /* Set column widths to auto for better space utilization */
+    th:nth-child(1), td:nth-child(1) { width: 60px; padding: 8px 12px; }     /* Type */
+    th:nth-child(2), td:nth-child(2) { width: auto; min-width: 120px; }  /* Name */
+    th:nth-child(3), td:nth-child(3) { width: 100px; }  /* Position */
+    th:nth-child(4), td:nth-child(4) { width: 150px; }  /* Email */
+    th:nth-child(5), td:nth-child(5) { width: 100px; }  /* Phone */
+    th:nth-child(6), td:nth-child(6) { width: auto; min-width: 120px; }  /* Organization */
+    th:nth-child(7), td:nth-child(7) { width: 80px; }  /* Category */
+    th:nth-child(8), td:nth-child(8) { width: 100px; }  /* Participant Type */
+    th:nth-child(9), td:nth-child(9) { width: 120px; }  /* Sub-Theme */
+    th:nth-child(10), td:nth-child(10) { width: auto; min-width: 150px; white-space: normal; } /* Exhibitions */
+    th:nth-child(11), td:nth-child(11) { width: 100px; text-align: right; padding-right: 12px; } /* Total Amount */
+    th:nth-child(12), td:nth-child(12) { width: 120px; } /* Payment Status */
+    th:nth-child(13), td:nth-child(13) { width: 120px; padding-right: 12px; } /* Created */
+    
+    /* Make table header sticky */
+    thead th {
+      position: sticky;
+      top: 0;
+      background: #f8fafc;
+      z-index: 10;
+      font-weight: 600;
+      color: #4b5563;
+      border-bottom: 2px solid #e5e7eb;
+    }
+    
+    /* Add subtle shadow to header when scrolling */
+    thead::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 5px;
+      background: transparent;
+      transition: all 0.3s ease;
+    }
+    
+    td.hoverable:hover::after {
+      background: var(--primary);
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    /* 
+  Author: Victoria Okello
+  Project: Conference Registration System 
+  Year: 2025
+*/
+
+    .payment-status:hover {
+      border-color: #9ca3af;
     }
     .payment-status:focus {
       outline: none;
       border-color: var(--primary);
       box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+    }
+    
+    .payment-amount-container {
+      display: none;
+      margin-top: 4px;
+      position: relative;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+    }
+    
+    .registration-group {
+      background-color: #f8fafc;
+      border-left: 4px solid var(--primary);
+      margin: 8px 0;
+    }
+    
+    .registration-group:first-child {
+      margin-top: 0;
+    }
+    
+    .registration-group-header {
+      background-color: #eef2ff;
+      padding: 8px 12px;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .registration-group-count {
+      background-color: var(--primary);
+      color: white;
+      border-radius: 12px;
+      padding: 2px 8px;
+      font-size: 12px;
+      font-weight: normal;
+    }
+    
+    .registration-group-body {
+      overflow-x: auto;
+    }
+    
+    .grouped-row {
+      background-color: #f8fafc;
+    }
+    
+    .grouped-row:not(:last-child) {
+      border-bottom: 1px dashed #e2e8f0;
     }
   </style>
 </head>
@@ -73,77 +317,257 @@
             <tr>
               <th>Type</th>
               <th>Name</th>
+              <th>Position</th>
               <th>Email</th>
               <th>Phone</th>
               <th>Organization</th>
               <th>Category</th>
+              <th>Participant Type</th>
+              <th>Sub-Theme</th>
+              <th>Exhibitions</th>
+              <th>Total Amount</th>
               <th>Payment Status</th>
-              <th class="muted">Created</th>
+              <th>Registered</th>
             </tr>
           </thead>
           <tbody id="tbody">
-            <tr><td class="empty" colspan="7">Loading...</td></tr>
+            <tr><td class="empty" colspan="13">Loading...</td></tr>
           </tbody>
         </table>
+        <div class="scroll-hint"></div>
       </div>
     </div>
   </div>
+<!-- 
+  Conference Registration System
+  Author: Victoria Okello;
+  Created: 2025
+  Ownership: This code is authored by Victoria Okello.
+-->
 
   <script>
     let allRows = [];
 
+    function getParticipantAmount(participantType) {
+      const amountMap = {
+        'nonresidential': 1000,
+        'residential': 1500,
+        'hybridparticipant': 500,
+      };
+      return amountMap[(participantType || '').toLowerCase()] || 0;
+    }
+
+    function calculateExhibitionAmount(exhibitions) {
+      if (!exhibitions) return 0;
+      
+      if (Array.isArray(exhibitions)) {
+        return exhibitions.reduce((sum, e) => {
+          return sum + (parseFloat(e.amount) || 0);
+        }, 0);
+      }
+      return 0;
+    }
+
     function normalizeMultiple(rec) {
       const rows = [];
+      const timestamp = rec.created_at || '';
+      // Create a unique group ID using timestamp and a random string to ensure uniqueness
+      const groupId = rec.id || `${timestamp}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      // Calculate total across all participants
+      let totalAmount = 0;
+      
       if (rec.primary) {
+        const participantAmount = getParticipantAmount(rec.primary.participantType);
+        const exhibitionAmount = calculateExhibitionAmount(rec.primary.exhibitions);
+        totalAmount += participantAmount + exhibitionAmount;
+        
         rows.push({
           type: 'multiple',
-          name: rec.primary.name || '',
-          email: rec.primary.email || '',
+          name: `${rec.primary.firstName || ''} ${rec.primary.surname || ''}`.trim(),
+          position: rec.primary.position || '',
+          email: rec.primary.email || rec.email || '',
+          participantType: rec.primary.participantType || '',
+          subTheme: rec.primary.subTheme || '',
           phone: rec.primary.phone || '',
           organization: rec.primary.organization || '',
           category: rec.primary.category || '',
-          created_at: rec.created_at || ''
+          exhibitions: rec.primary.exhibitions ? 
+            rec.primary.exhibitions.map(e => `${e.detail} (${e.amount})`).join(', ') : '',
+          totalAmount: participantAmount + exhibitionAmount,
+          participantCharge: participantAmount,
+          exhibitionCharge: exhibitionAmount,
+          payment_status: rec.primary.payment_status || 'unpaid',
+          created_at: timestamp,
+          groupId: groupId,
+          isPrimary: true,
+          registrationDate: new Date(timestamp).toLocaleString()
         });
       }
+      
       if (Array.isArray(rec.additional)) {
         for (const a of rec.additional) {
+          const participantAmount = getParticipantAmount(a.participantType);
+          const exhibitionAmount = calculateExhibitionAmount(a.exhibitions);
+          totalAmount += participantAmount + exhibitionAmount;
+          
           rows.push({
             type: 'multiple',
             name: a.name || '',
+            position: a.position || '',
             email: a.email || '',
             phone: a.phone || '',
             organization: a.organization || '',
             category: a.category || '',
-            created_at: rec.created_at || ''
+            participantType: a.participantType || '',
+            subTheme: a.subTheme || '',
+            exhibitions: a.exhibitions ? 
+              a.exhibitions.map(e => `${e.detail} (${e.amount})`).join(', ') : '',
+            totalAmount: participantAmount + exhibitionAmount,
+            participantCharge: participantAmount,
+            exhibitionCharge: exhibitionAmount,
+            payment_status: a.payment_status || 'unpaid',
+            created_at: timestamp,
+            groupId: groupId,
+            isPrimary: false,
+            registrationDate: new Date(timestamp).toLocaleString()
           });
         }
       }
+      
+      // Update the total amount for the group if needed
+      if (rec.totalAmount === undefined) {
+        rec.totalAmount = totalAmount;
+      }
       return rows;
+    }
+
+    function groupRegistrations(rows) {
+      const groups = {};
+      
+      // Group by groupId
+      rows.forEach(row => {
+        if (!groups[row.groupId]) {
+          groups[row.groupId] = [];
+        }
+        groups[row.groupId].push(row);
+      });
+      
+      return Object.values(groups);
     }
 
     function render(rows) {
       const tbody = document.getElementById('tbody');
       if (!rows.length) {
-        tbody.innerHTML = '<tr><td class="empty" colspan="7">No registrations found</td></tr>';
+        tbody.innerHTML = '<tr><td class="empty" colspan="12">No registrations found</td></tr>';
         return;
       }
-      tbody.innerHTML = rows.map(r => `
-        <tr>
-          <td><span class="badge">${r.type || ''}</span></td>
-          <td>${escapeHtml(r.name || '')}</td>
-          <td>${escapeHtml(r.email || '')}</td>
-          <td>${escapeHtml(r.phone || '')}</td>
-          <td>${escapeHtml(r.organization || '')}</td>
-          <td>${escapeHtml(r.category || '')}</td>
-          <td>
-            <select class="payment-status" data-email="${escapeHtml(r.email || '')}">
-              <option value="unpaid" ${(r.payment_status || 'unpaid') === 'unpaid' ? 'selected' : ''}>Unpaid</option>
-              <option value="paid" ${(r.payment_status || 'unpaid') === 'paid' ? 'selected' : ''}>Paid</option>
-            </select>
-          </td>
-          <td class="muted">${escapeHtml(r.created_at || '')}</td>
-        </tr>
-      `).join('');
+      
+      // Group registrations
+      const registrationGroups = groupRegistrations(rows);
+      
+      // Sort groups by registration date (newest first)
+      registrationGroups.sort((a, b) => {
+        return new Date(b[0].created_at) - new Date(a[0].created_at);
+      });
+      
+      let html = '';
+      
+      registrationGroups.forEach((group, groupIndex) => {
+        const groupDate = group[0].registrationDate;
+        const primaryRegistrant = group.find(r => r.isPrimary) || group[0];
+        
+        // Group header
+        html += `
+          <div class="registration-group">
+            <div class="registration-group-header">
+              <span>Registration Group • ${groupDate}</span>
+              <span class="registration-group-count">${group.length} ${group.length === 1 ? 'person' : 'people'}</span>
+            </div>
+            <div class="registration-group-body">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Type</th>
+                    <th>Name</th>
+                    <th>Position</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Organization</th>
+                    <th>Category</th>
+                    <th>Participant Type</th>
+                    <th>Sub-Theme</th>
+                    <th>Exhibitions</th>
+                    <th>Total Amount</th>
+                    <th>Payment Status</th>
+                    <th>Registered</th>
+                  </tr>
+                </thead>
+                <tbody>
+        `;
+
+        if (window.console) {
+          console.log("%cMade by Victoria Okello © 2025", "color: purple; font-size: 14px;");
+        }
+
+        // Group rows
+        group.forEach((r, index) => {
+          const rowClass = index === 0 ? 'first-in-group' : 'grouped-row';
+          const isPrimary = r.isPrimary ? ' (Primary)' : '';
+          
+          html += `
+            <tr class="${rowClass}">
+              <td><span class="badge">${r.type || ''}</span>${isPrimary ? ' <span class="primary-badge">★</span>' : ''}</td>
+              <td class="hoverable" title="${escapeHtml(r.name || '')}">${escapeHtml(r.name || '')}</td>
+              <td class="hoverable" title="${escapeHtml(r.position || '-')}">${escapeHtml(r.position || '-')}</td>
+              <td class="hoverable" title="${escapeHtml(r.email || '')}">${escapeHtml(r.email || '')}</td>
+              <td class="hoverable" title="${escapeHtml(r.phone || '')}">${escapeHtml(r.phone || '')}</td>
+              <td class="hoverable organization-cell" title="${escapeHtml(r.organization || '')}">${escapeHtml(r.organization || '')}</td>
+              <td class="hoverable category-cell" title="${escapeHtml(r.category || '')}">${escapeHtml(r.category || '')}</td>
+              <td class="hoverable participant-type" title="${r.participantType ? r.participantType.charAt(0).toUpperCase() + r.participantType.slice(1).replace(/([A-Z])/g, ' $1').trim() : '-'}">${r.participantType ? r.participantType.charAt(0).toUpperCase() + r.participantType.slice(1).replace(/([A-Z])/g, ' $1').trim() : '-'}</td>
+              <td class="hoverable sub-theme" title="${r.subTheme ? escapeHtml(r.subTheme) : '-'}">${r.subTheme ? escapeHtml(r.subTheme) : '-'}</td>
+              <td class="hoverable exhibition-cell" title="${r.exhibitions ? escapeHtml(r.exhibitions) : '-'}">${r.exhibitions ? escapeHtml(r.exhibitions) : '-'}</td>
+              <td class="hoverable total-amount" title="${r.totalAmount ? 'KES ' + parseFloat(r.totalAmount).toLocaleString() : '-'}">${r.totalAmount ? 'KES ' + parseFloat(r.totalAmount).toLocaleString() : '-'}</td>
+              <td>
+                ${(r.type === 'single' || r.isPrimary) && r.email ? `
+                <select id="payment-status-${(r.email || '').replace(/[^a-zA-Z0-9-]/g, '-')}" 
+                        name="payment_status_${(r.email || '').replace(/[^a-zA-Z0-9-]/g, '_')}" 
+                        class="payment-status" 
+                        data-email="${escapeHtml(r.email || '')}"
+                        aria-label="Payment status for ${escapeHtml(r.name || 'attendee')}">
+                  <option value="unpaid" ${(r.payment_status || 'unpaid').startsWith('unpaid') ? 'selected' : ''}>Unpaid</option>
+                  <option value="partially_paid" ${(r.payment_status || '').startsWith('partially_paid') ? 'selected' : ''}>Partially Paid</option>
+                  <option value="paid" ${(r.payment_status || '') === 'paid' ? 'selected' : ''}>Paid</option>
+                </select>
+                <div class="payment-amount-container" style="${(r.payment_status || '').startsWith('partially_paid') ? 'display: block;' : ''}">
+                  <input type="number" 
+                         id="payment-amount-${(r.email || '').replace(/[^a-zA-Z0-9-]/g, '-')}"
+                         name="payment_amount_${(r.email || '').replace(/[^a-zA-Z0-9-]/g, '_')}"
+                         class="payment-amount" 
+                         placeholder="Amount paid" 
+                         value="${(r.payment_status || '').startsWith('partially_paid:') ? (r.payment_status.split(':')[1] || '') : ''}"
+                         data-email="${escapeHtml(r.email || '')}"
+                         aria-label="Amount paid for ${escapeHtml(r.name || 'attendee')}"
+                         min="0"
+                         step="0.01">
+                </div>
+                ` : '-'}
+              </td>
+              <td class="hoverable muted" title="${r.registrationDate || ''}">${r.registrationDate || ''}</td>
+            </tr>
+          `;
+        });
+        
+        // Close group
+        html += `
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `;
+      });
+      
+      tbody.innerHTML = html;
     }
 
     function filterRows() {
@@ -159,15 +583,26 @@
       render(filtered);
     }
 
-    async function savePaymentStatus(email, status) {
+    async function savePaymentStatus(email, status, amount = '') {
       try {
+        // If status is partially paid and amount is provided, append it
+        const paymentStatus = status === 'partially_paid' && amount ? `partially_paid:${amount}` : status;
+        
         await fetch('update_payment_status.php', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ email, status })
+          body: JSON.stringify({ email, status: paymentStatus })
         });
+
+        // Generate receipt when fully paid
+        if (status === 'paid') {
+          const registration = allRows.find(r => r.email === email && (r.type === 'single' || r.isPrimary));
+          if (registration) {
+            generateReceipt(registration);
+          }
+        }
       } catch (e) {
         console.error('Failed to update payment status:', e);
         alert('Failed to update payment status. Please try again.');
@@ -198,42 +633,280 @@
     function escapeCsv(s){
       if (s == null) return '';
       s = String(s);
-      if (/[",\n]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+      if (/[\",\n]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
       return s;
     }
 
+    async function generateReceipt(registration) {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const now = new Date();
+      const RcptNo = `RCPT-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}-${String(registration.id || '0000').padStart(4, '0')}`;
+      
+      // For multiple registrations, get all participants in the same group
+      const allParticipants = registration.type === 'multiple' && registration.groupId ? 
+        allRows.filter(r => r.groupId === registration.groupId) : [registration];
+
+      // Logo
+      try {
+        const img = new Image();
+        img.src = "Mespt_logo.png";
+        await new Promise((res, rej) => { img.onload = res; img.onerror = rej; });
+        doc.addImage(img, "PNG", (pageWidth - 50) / 2, 8, 50, 25);
+      } catch {}
+
+      // Header
+      doc.setFontSize(18);
+      doc.text("RECEIPT", pageWidth / 2, 40, { align: "center" });
+      doc.setFontSize(10);
+      doc.text(`Date: ${now.toLocaleDateString()}` , pageWidth - 70, 20);
+      doc.text(`Receipt No: ${RcptNo}` , pageWidth - 70, 26);
+
+      // Organization info
+      let y = 55;
+      doc.setFontSize(10);
+      doc.text("Micro Enterprises Support Programme Trust", 14, y); y += 6;
+      doc.text("Tausi Lane, Between Muthithi Rd & Westlands Rd, Gate 01", 14, y); y += 6;
+      doc.text("P.O BOX 187 – 00606- Sarit Centre", 14, y); y += 6;
+      doc.text("Nairobi", 14, y); y += 6;
+      doc.text("Tel: +254722207905; info@mespt.org", 14, y); y += 10;
+
+      // Bill To
+      doc.setFont("helvetica", "bold");
+      doc.text("Bill To:", 14, y); y += 8;
+      doc.setFont("helvetica", "normal");
+
+      if (registration.organization) doc.text(registration.organization, 14, y), y += 6;
+      if (registration.phone) doc.text(`Tel: ${registration.phone}`, 14, y), y += 6;
+      doc.text(registration.name || 'N/A', 14, y), y += 6;
+      if (registration.position) doc.text(registration.position, 14, y), y += 6;
+      doc.text(`Email: ${registration.email || 'N/A'}`, 14, y), y += 10;
+      doc.text("Ref: 2025 BDCG Inclusive Market Symposium", 14, y); y += 12;
+
+      // Payment Info
+      doc.setFontSize(12);
+      doc.text("The payment received is for:", 14, y);
+      y += 8;
+
+      // Table headers
+      const tableStartY = y;
+      doc.setFontSize(11);
+      
+      // Add light blue background to header
+      doc.setFillColor(220, 230, 241);
+      doc.rect(14, tableStartY, 182, 10, 'F');
+      
+      // Add header text with adjusted y-position to center in the shaded area
+      doc.text("Description", 16, tableStartY + 7);
+      doc.text("Charge (KES)", 170, tableStartY + 7, { align: "right" });
+
+      let currentY = tableStartY + 17; // Add more space after the header
+
+      // Add line items for each participant
+      let totalAmount = 0;
+      
+      allParticipants.forEach((participant, index) => {
+        const participantLabel = participant.isPrimary ? 'Primary Participant' : 
+                              (participant.name ? `Additional Participant: ${participant.name}` : 'Additional Participant');
+        
+        // Participant Type
+        if (participant.participantType) {
+          doc.setFont('helvetica', 'bold');
+          doc.text(`${participantLabel} (${participant.participantType})`, 14, currentY);
+          doc.setFont('helvetica', 'normal');
+          doc.text(`${participant.participantCharge || 0}`, 160, currentY, { align: "right" });
+          currentY += 7;
+          totalAmount += participant.participantCharge || 0;
+        }
+
+        // Exhibitions for this participant
+        if (participant.exhibitions) {
+          const exhibitions = participant.exhibitions.split(',').filter(e => e.trim());
+          if (exhibitions.length > 0) {
+            exhibitions.forEach(exhibition => {
+              doc.text(`• ${exhibition.trim()}`, 20, currentY);
+              // Extract amount from exhibition string (format: "detail (amount)")
+              const amountMatch = exhibition.match(/\(([^)]+)\)/);
+              const amount = amountMatch ? parseFloat(amountMatch[1]) || 0 : 0;
+              doc.text(`${amount}`, 160, currentY, { align: "right" });
+              currentY += 7;
+              totalAmount += amount;
+            });
+          } else {
+            doc.setFont('helvetica', 'bold');
+            doc.text("Exhibitions", 14, currentY);
+            doc.setFont('helvetica', 'normal');
+            doc.text(`${participant.exhibitionCharge || 0}`, 160, currentY, { align: "right" });
+            currentY += 7;
+            totalAmount += participant.exhibitionCharge || 0;
+          }
+        }
+
+        // Sub-Theme
+        if (participant.subTheme) {
+          doc.setFont('helvetica', 'bold');
+          doc.text("Sub-Theme", 14, currentY);
+          doc.setFont('helvetica', 'normal');
+          doc.text("Included", 160, currentY, { align: "right" });
+          currentY += 7;
+        }
+        
+        // Add some space between participants if there are multiple
+        if (index < allParticipants.length - 1) {
+          currentY += 5;
+        }
+      });
+
+      // Add horizontal line before total
+      doc.setDrawColor(0, 0, 0); // Black color for the line
+      doc.line(14, currentY + 2, 196, currentY + 2); // x1, y1, x2, y2
+      currentY += 10; // Add some space after the line
+
+      // Total
+      doc.setFontSize(12);
+      doc.text("Total", 14, currentY + 5);
+      doc.text(`KES ${totalAmount || 0}`, 160, currentY + 5, { align: "right" });
+
+      // Add some space before bank details
+      currentY += 25;
+      
+      // Bank details
+      doc.setFontSize(10);
+      doc.text("Bank Account Details:", 14, currentY); currentY += 7;
+      doc.text("Bank Name: KCB", 16, currentY); currentY += 6;
+      doc.text("Branch Name: Sarit Centre", 16, currentY); currentY += 6;
+      doc.text("Account Name: MESPT BUSINESS SERVICES", 16, currentY); currentY += 6;
+      doc.text("Account Number: 1129775283", 16, currentY); currentY += 6;
+      doc.text("Swift Address: KCBLKENX", 16, currentY); currentY += 15;
+
+      // Footer
+      doc.setFontSize(10);
+      doc.text("Thank you for your payment.", 105, currentY, { align: "center" });
+
+      // Save file
+      doc.save(`receipt_${registration.email || 'unknown'}.pdf`);
+      
+      // Send email with receipt
+      try {
+        const pdfBlob = doc.output('blob');
+        await sendReceiptToEmail(registration.email, registration.name, pdfBlob);
+      } catch (error) {
+        console.error('Error sending receipt email:', error);
+        showToast('❌ Failed to send receipt email', 'error');
+      }
+    }
+
+    // Event listeners
     document.getElementById('search').addEventListener('input', filterRows);
     document.getElementById('typeFilter').addEventListener('change', filterRows);
     document.getElementById('categoryFilter').addEventListener('change', filterRows);
     document.getElementById('exportBtn').addEventListener('click', exportCSV);
-    document.getElementById('refreshBtn').addEventListener('click', load);
-    
+
     // Handle payment status changes
-    document.addEventListener('change', (e) => {
+    document.addEventListener('change', function(e) {
       if (e.target.classList.contains('payment-status')) {
         const email = e.target.dataset.email;
         const status = e.target.value;
-        savePaymentStatus(email, status);
+        const amountContainer = e.target.closest('td').querySelector('.payment-amount-container');
+        
+        if (status === 'partially_paid') {
+          if (amountContainer) {
+            amountContainer.style.display = 'block';
+            const amountInput = amountContainer.querySelector('.payment-amount');
+            if (amountInput) {
+              amountInput.focus();
+            }
+          }
+        } else {
+          if (amountContainer) {
+            amountContainer.style.display = 'none';
+          }
+          savePaymentStatus(email, status);
+        }
       }
     });
 
+    // Handle payment amount changes
+    document.addEventListener('change', function(e) {
+      if (e.target.classList.contains('payment-amount')) {
+        const email = e.target.dataset.email;
+        const amount = e.target.value;
+        const statusSelect = document.querySelector(`.payment-status[data-email="${email}"]`);
+        
+        if (statusSelect && statusSelect.value === 'partially_paid') {
+          savePaymentStatus(email, 'partially_paid', amount);
+        }
+      }
+    });
+    
     async function load() {
       try {
-        const res = await fetch('get_registrations.php');
-        const data = await res.json();
-        // Normalize
+        const response = await fetch('get_registrations.php');
+        const data = await response.json();
         allRows = [];
+        
         for (const rec of data) {
           if (rec.type === 'single') {
             allRows.push({
               type: 'single',
-              name: rec.name || '',
+              name: (rec.firstName ? `${rec.firstName} ${rec.surname || ''}`.trim() : rec.name || ''),
+              position: rec.position || '',
               email: rec.email || '',
               phone: rec.phone || '',
               organization: rec.organization || '',
               category: rec.category || '',
+              participantType: rec.participantType || '',
+              subTheme: rec.speakerInfo?.subTheme || rec.subTheme || '',
+              participantType: rec.participantType || '',
+              participantCharge: (() => {
+                const amountMap = {
+                  'nonresidential': 1000,
+                  'residential': 1500,
+                  'hybridparticipant': 1500
+                };
+                const participantType = (rec.participantType || '').toLowerCase();
+                return amountMap[participantType] || 0;
+              })(),
+              exhibitions: rec.exhibitions ? rec.exhibitions.map(e => `${e.detail} (${e.amount})`).join(', ') : '',
+              exhibitionCharge: (() => {
+                if (!rec.exhibitions) return 0;
+                if (Array.isArray(rec.exhibitions)) {
+                  return rec.exhibitions.reduce((sum, e) => {
+                    return e && typeof e.amount !== 'undefined' ? sum + (parseFloat(e.amount) || 0) : sum;
+                  }, 0);
+                }
+                return 0;
+              })(),
+              totalAmount: (() => {
+                // Get participant charge
+                const participantCharge = (() => {
+                  const amountMap = {
+                    'nonresidential': 1000,
+                    'residential': 1500,
+                    'hybridparticipant': 1500
+                  };
+                  const participantType = (rec.participantType || '').toLowerCase();
+                  return amountMap[participantType] || 0;
+                })();
+                
+                // Get exhibition charge
+                const exhibitionCharge = (() => {
+                  if (!rec.exhibitions) return 0;
+                  if (Array.isArray(rec.exhibitions)) {
+                    return rec.exhibitions.reduce((sum, e) => {
+                      return e && typeof e.amount !== 'undefined' ? sum + (parseFloat(e.amount) || 0) : sum;
+                    }, 0);
+                  }
+                  return 0;
+                })();
+                
+                return participantCharge + exhibitionCharge;
+              })(),
               payment_status: rec.payment_status || 'unpaid',
-              created_at: rec.created_at || ''
+              created_at: rec.created_at || '',
+              registrationDate: new Date(rec.created_at || '').toLocaleString(),
+              groupId: rec.id || `single_${rec.email || Date.now()}`
             });
           } else if (rec.type === 'multiple') {
             allRows.push(...normalizeMultiple(rec));
@@ -249,6 +922,99 @@
     }
 
     load();
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  
+  <!-- Toast Notification Styles -->
+  <style>
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #333;
+      color: #fff;
+      padding: 12px 18px;
+      border-radius: 6px;
+      opacity: 0;
+      transition: opacity 0.4s ease-in-out;
+      z-index: 1000;
+      max-width: 300px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .toast.show {
+      opacity: 1;
+    }
+    .toast.success {
+      background: #5cb85c;
+    }
+    .toast.error {
+      background: #d9534f;
+    }
+  </style>
+
+  <!-- Toast Container -->
+  <div id="toast" class="toast"></div>
+
+  <script>
+    // Toast notification function
+    function showToast(message, isError = false) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.className = `toast show ${isError ? 'error' : 'success'}`;
+      
+      // Auto-hide after 3 seconds
+      clearTimeout(window.toastTimeout);
+      window.toastTimeout = setTimeout(() => {
+        toast.classList.remove("show");
+      }, 3000);
+    }
+
+    // Send receipt via email
+    async function sendReceiptToEmail(email, name, pdfBlob) {
+      try {
+        const formData = new FormData();
+        formData.append("email", email);
+        formData.append("name", name || 'Participant');
+        formData.append("pdf", pdfBlob, "receipt.pdf");
+
+        const response = await fetch("send_receipt.php", {
+          method: "POST",
+          body: formData
+        });
+
+        // First get the response as text
+        const responseText = await response.text();
+        
+        // Try to parse as JSON, but handle cases where it's not valid JSON
+        let result;
+        try {
+          result = JSON.parse(responseText);
+        } catch (e) {
+          // If it's not valid JSON, it's probably an error page
+          console.error('Server returned non-JSON response:', responseText);
+          // Look for common PHP error patterns
+          const errorMatch = responseText.match(/<b>(Warning|Fatal error|Parse error):<\/b>\s*([^<]+)/i);
+          const errorMessage = errorMatch 
+            ? `Server error: ${errorMatch[2].trim()}` 
+            : 'The server returned an invalid response. Please check the console for details.';
+          throw new Error(errorMessage);
+        }
+
+        if (result && result.success) {
+          showToast(`✅ Receipt sent to ${email}`);
+        } else {
+          throw new Error(result?.error || 'Failed to send receipt');
+        }
+        return result;
+      } catch (error) {
+        console.error("Error sending receipt:", error);
+        const userMessage = error.message.includes('Failed to fetch') 
+          ? 'Network error: Could not connect to the server' 
+          : error.message;
+        showToast(`❌ ${userMessage}`, true);
+        throw error; // Re-throw to allow error handling by the caller
+      }
+    }
   </script>
 </body>
 </html>

@@ -20,11 +20,11 @@
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial; margin: 0; background: var(--bg); color: var(--text); }
     .page { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; }
     .card { width: 100%; max-width: 720px; background: var(--card); border-radius: 16px; box-shadow: var(--shadow); padding: 26px; border: 1px solid var(--border); }
-    h2 { margin: 0 0 16px; font-size: 24px; letter-spacing: .2px; }
-    h4 { margin: 14px 0 10px; color: var(--muted); font-size: 14px; font-weight: 600; }
+    h2 { margin: 0 0 16px; font-size: 24px; letter-spacing: .2px; color: #2563eb; }
+    h4 { margin: 14px 0 10px; color: #2563eb; font-size: 14px; font-weight: 600; }
 
     .form-group { margin-bottom: 14px; }
-    label { display: block; font-size: 14px; color: var(--muted); margin-bottom: 6px; }
+    label { display: block; font-size: 14px; color: #2563eb; margin-bottom: 6px; }
     input[type="text"], input[type="email"], input[type="tel"], select {
       width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: #fff; color: var(--text);
       outline: none; transition: box-shadow .15s ease, border-color .15s ease;
@@ -32,11 +32,53 @@
     input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15); }
 
     .email-entry { display: grid; grid-template-columns: 1fr 1fr; column-gap: 14px; row-gap: 12px; margin: 18px 0; }
-    .email-entry input[type="email"] { grid-column: span 2; }
-    @media (max-width: 640px) {
-      .email-entry { grid-template-columns: 1fr; }
-      .email-entry input[type="email"] { grid-column: span 1; }
+    .email-entry > * { width: 100%; margin: 0; }
+    .email-entry input[type="email"],
+    .email-entry .form-group,
+    .email-entry select,
+    .email-entry .static-field,
+    .email-entry .exhibitions-container { 
+      grid-column: span 2; 
+      width: 100%;
+      margin-bottom: 14px;
     }
+    .email-entry .form-group { margin-bottom: 0; }
+    .email-entry .form-group label { margin-bottom: 6px; display: block; }
+    .email-entry select,
+    .email-entry .static-field {
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text);
+      font-size: 14px;
+      height: 42px;
+      box-sizing: border-box;
+    }
+    .email-entry .static-field {
+      background: #f9fafb;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+    }
+    @media (max-width: 640px) {
+      .email-entry { 
+        grid-template-columns: 1fr; 
+        row-gap: 14px;
+      }
+      .email-entry input[type="email"],
+      .email-entry .form-group,
+      .email-entry select,
+      .email-entry .static-field,
+      .email-entry .exhibitions-container { 
+        grid-column: span 1; 
+      }
+    }
+/* 
+  Author: Victoria Okello
+  Project: Conference Registration System 
+  Year: 2025
+*/
 
     /* Static field styling to look like a disabled input */
     .static-field {
@@ -69,12 +111,20 @@
       <form id="multipleForm">
       <div class="form-group">
         <label for="primaryEmail">Primary Email:</label>
-        <input type="email" id="primaryEmail" name="primaryEmail" autocomplete="email" required>
+        <input type="email" id="primaryEmail" name="primaryEmail" autocomplete="email" placeholder="Enter primary email" required>
       </div>
       <div id="primaryDetails" style="display:none;">
         <div class="form-group">
-          <label for="primaryName">Primary Full Name:</label>
-          <input type="text" id="primaryName" name="primaryName" autocomplete="name" placeholder="Enter full name" required>
+          <label for="primaryfirstName">Primary First Name:</label>
+          <input type="text" id="primaryfirstName" name="primaryfirstName" autocomplete="name" placeholder="Enter first name" required>
+        </div>
+        <div class="form-group">
+          <label for="primarysurname">Primary Surname:</label>
+          <input type="text" id="primarysurname" name="primarysurname" autocomplete="name" placeholder="Enter surname" required>
+        </div>
+        <div class="form-group">
+          <label for="primaryposition">Primary Position:</label>
+          <input type="text" id="primaryposition" name="primaryposition" autocomplete="name" placeholder="Enter position" required>
         </div>
         <div class="form-group">
           <label for="primaryPhone">Primary Phone:</label>
@@ -85,16 +135,85 @@
           <input type="text" id="primaryOrganization" name="primaryOrganization" autocomplete="organization" placeholder="Enter organization name" required>
         </div>
         <div class="form-group">
+          <label for="participantType">Type of Participant:</label>
+          <select id="participantType" required>
+            <option value="" disabled selected>Select type of participant</option>
+            <option value="nonResidential">Non Residential</option>
+            <option value="residential">Residential</option>
+            <option value="hybridParticipant">Hybrid Participant</option>
+          </select>
+        </div>
+
+        <!-- Exhibition Options -->
+        <div class="form-group">
+          <div id="exhibitionsLabel">Exhibition Options</div>
+          <div id="exhibitionsContainer" class="exhibitions-container">
+            <div class="exhibition-row" style="display: flex; gap: 12px; margin-bottom: 12px; align-items: flex-end;">
+              <div style="flex: 2;">
+                <label for="primaryExhibitionDetail">Exhibition Details:</label>
+                <input type="text" id="primaryExhibitionDetail" name="exhibitions[]" class="exhibition-detail" placeholder="Enter exhibition details" style="width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px;">
+         </div>
+         <div style="flex: 1;">
+              <label for="exhibitionAmount">Amount (KES):</label>
+              <input type="number" id="exhibitionAmount" name="exhibitionAmounts[]" class="exhibition-amount" placeholder="Enter amount" style="width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px;">
+          </div>
+              <button type="button" class="add-exhibition" style="margin-bottom: 6px; padding: 0; background: #4CAF50; border: none; border-radius: 4px; color: white; cursor: pointer; width: 32px; height: 38px; display: flex; align-items: center; justify-content: center;">
+              <span style="font-size: 20px; line-height: 1;">+</span>
+              </button>
+          </div>
+          </div>
+       </div>
+
+        <div class="form-group">
           <label for="primaryCategory">Primary Category:</label>
           <select id="primaryCategory" name="primaryCategory" required>
             <option value="" disabled selected>Select category</option>
-            <option value="attendee">Attendee</option>
+            <option value="participant">Participant</option>
             <option value="speaker">Speaker</option>
-            <option value="sponsor">Sponsor</option>
-            <option value="staff">Staff</option>
           </select>
         </div>
+        
+        <!-- Speaker Specific Fields -->
+        <div id="speakerFields" style="display: none; margin-top: 15px; padding-top: 15px; border-top: 1px dashed var(--border);">
+          <h3 style="margin: 0 0 15px 0; font-size: 18px; color: var(--primary);">Speaker Information</h3>
+          
+          <div class="form-group">
+            <div id="subThemeLabel">Proposed Sub-Theme:</div>
+            <div style="margin-top: 8px;">
+              <div style="margin-bottom: 8px;">
+                <input type="radio" id="theme1" name="subTheme" value="Agri-Finance for Resilient Food Systems (investment) - KCV">
+                <label for="theme1" style="display: inline; margin-left: 8px;">Agri-Finance for Resilient Food Systems (investment) - KCV</label>
+              </div>
+              <div style="margin-bottom: 8px;">
+                <input type="radio" id="theme2" name="subTheme" value="Climate Change Adaptation & Green Transformation - Sustainable & Regenerative Agriculture – Ripple & MESPT">
+                <label for="theme2" style="display: inline; margin-left: 8px;">Climate Change Adaptation & Green Transformation - Sustainable & Regenerative Agriculture – Ripple & MESPT</label>
+              </div>
+              <div style="margin-bottom: 8px;">
+                <input type="radio" id="theme3" name="subTheme" value="Market Systems, Trade & Regional Integration - Private Sector Engagement & Partnerships - (investment) – Migingo, MEDA & TMA">
+                <label for="theme3" style="display: inline; margin-left: 8px;">Market Systems, Trade & Regional Integration - Private Sector Engagement & Partnerships - (investment) – Migingo, MEDA & TMA</label>
+              </div>
+              <div style="margin-bottom: 8px;">
+                <input type="radio" id="theme4" name="subTheme" value="Gender Equality & Social Inclusion (GESI) + Disability - Youth & Future Market Systems Leadership – Christian Aid & Tanager">
+                <label for="theme4" style="display: inline; margin-left: 8px;">Gender Equality & Social Inclusion (GESI) + Disability - Youth & Future Market Systems Leadership – Christian Aid & Tanager</label>
+              </div>
+              <div style="margin-bottom: 8px;">
+                <input type="radio" id="theme5" name="subTheme" value="Measuring Systemic Change & Policy Influence – IFDC">
+                <label for="theme5" style="display: inline; margin-left: 8px;">Measuring Systemic Change & Policy Influence – IFDC</label>
+              </div>
+              <div style="margin-bottom: 8px;">
+                <input type="radio" id="theme6" name="subTheme" value="Innovation & Scale – IDE & Heifer">
+                <label for="theme6" style="display: inline; margin-left: 8px;">Innovation & Scale – IDE & Heifer</label>
+              </div>
+              <div style="margin-bottom: 8px;">
+                <input type="radio" id="theme7" name="subTheme" value="Others">
+                <label for="theme7" style="display: inline; margin-left: 8px;">Others</label>
+                <input type="text" id="otherTheme" name="otherTheme" style="display: none; margin-left: 25px; width: calc(100% - 50px); margin-top: 5px; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border);" placeholder="Please specify your theme">
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
+      
       <div id="emailContainer" style="display:none;">
         <h4>Additional Emails</h4>
         <div id="emails"></div>
@@ -104,8 +223,29 @@
       </form>
     </div>
   </div>
+<!-- 
+  Conference Registration System
+  Author: Victoria Okello
+  Created: 2025
+  Ownership: This code is authored by Victoria Okello.
+-->
 
   <script>
+    function updateAddBtnState() {
+  const addBtn = document.getElementById('addBtn');
+  if (!addBtn) return;
+
+  const primaryEmail = document.getElementById('primaryEmail')?.value.trim();
+  const primaryFirstName = document.getElementById('primaryfirstName')?.value.trim();
+  const primarySurname = document.getElementById('primarysurname')?.value.trim();
+  const primaryPhone = document.getElementById('primaryPhone')?.value.trim();
+  const primaryOrg = document.getElementById('primaryOrganization')?.value.trim();
+  const primaryCat = document.getElementById('primaryCategory')?.value;
+
+  const allFilled = primaryEmail && primaryFirstName && primarySurname && primaryPhone && primaryOrg && primaryCat;
+  addBtn.disabled = !allFilled;
+}
+
     // Simple message helper
     function showMessage(type, text) {
       const box = document.getElementById('msg');
@@ -115,167 +255,260 @@
 
     // Check whether primary info is valid
     function isPrimaryValid() {
-      const ids = ['primaryEmail','primaryName','primaryPhone','primaryOrganization','primaryCategory'];
-      let ok = true;
-      ids.forEach(id => {
+      const requiredFields = [
+        'primaryEmail',
+        'primaryfirstName',
+        'primarysurname',
+        'primaryPhone',
+        'primaryOrganization',
+        'primaryCategory'
+      ];
+      
+      // Check required fields
+      const allFieldsValid = requiredFields.every(id => {
         const el = document.getElementById(id);
-        if (!el || !el.value) ok = false;
+        return el && el.value.trim() !== '';
       });
-      return ok;
+      
+      // If category is speaker, check if a sub-theme is selected
+      const category = document.getElementById('primaryCategory')?.value;
+      if (category === 'speaker') {
+        const subThemeSelected = Array.from(document.getElementsByName('subTheme')).some(radio => radio.checked);
+        if (!subThemeSelected) {
+          return false;
+        }
+        
+        // Check if "Others" is selected and has a value
+        const otherRadio = document.querySelector('input[name="subTheme"][value="Others"]');
+        const otherThemeInput = document.getElementById('otherTheme');
+        if (otherRadio?.checked && (!otherThemeInput || !otherThemeInput.value.trim())) {
+          return false;
+        }
+      }
+      
+      return allFieldsValid;
     }
 
     async function generateInvoice(payload) {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
-      const now = new Date();
-      const invNo = 'INV-' + now.getFullYear() + String(now.getMonth()+1).padStart(2,'0') + String(now.getDate()).padStart(2,'0') + '-' + String(now.getHours()).padStart(2,'0') + String(now.getMinutes()).padStart(2,'0') + String(now.getSeconds()).padStart(2,'0');
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  const now = new Date();
+  const pageWidth = doc.internal.pageSize.getWidth();
 
-      // Header
-      doc.setFontSize(18);
-      const pageWidth = doc.internal.pageSize.getWidth();
-      doc.text('INVOICE', pageWidth / 2, 18, { align: 'center' });
-      doc.setFontSize(11);
-      doc.text(`Invoice No: ${invNo}`, 14, 26);
-      doc.text(`Date: ${now.toLocaleString()}`, 14, 32);
+  const invNo = "INV-" + now.getFullYear() +
+    String(now.getMonth() + 1).padStart(2, "0") +
+    String(now.getDate()).padStart(2, "0") + "-" +
+    String(now.getHours()).padStart(2, "0") +
+    String(now.getMinutes()).padStart(2, "0") +
+    String(now.getSeconds()).padStart(2, "0");
 
-      // Logo (top-right corner)
-      const logoWidth = 40; // adjust as needed
-      const logoHeight = 20; // adjust as needed
-      const logoX = pageWidth - logoWidth - 14;
-      const logoY = 10;
-      try {
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.src = './Mespt_logo.png'; // Using relative path to the logo in the same directory
-        await new Promise((resolve, reject) => {
-          img.onload = resolve;
-          img.onerror = reject;
-        });
-        doc.addImage(img, 'PNG', logoX, logoY, logoWidth, logoHeight);
-      } catch (e) {
-        // If logo fails to load, continue without blocking
-        console.warn('Logo not added to invoice:', e);
+  // Logo
+  try {
+    const img = new Image();
+    img.src = "Mespt_logo.png";
+    await new Promise((res, rej) => { img.onload = res; img.onerror = rej; });
+    doc.addImage(img, "PNG", (pageWidth - 50) / 2, 8, 50, 25);
+  } catch {}
+
+  // Header
+  doc.setFontSize(18);
+  doc.text("INVOICE", pageWidth / 2, 40, { align: "center" });
+  doc.setFontSize(10);
+  doc.text(`Date: ${now.toLocaleDateString()}`, pageWidth - 70, 20);
+  doc.text(`Invoice No: ${invNo}`, pageWidth - 70, 26);
+
+  // Organization info
+  let y = 55;
+  doc.setFontSize(10);
+  doc.text("Micro Enterprises Support Programme Trust", 14, y); y += 6;
+  doc.text("Tausi Lane, Between Muthithi Rd & Westlands Rd, Gate 01", 14, y); y += 6;
+  doc.text("P.O BOX 187 – 00606- Sarit Centre", 14, y); y += 6;
+  doc.text("Nairobi", 14, y); y += 6;
+  doc.text("Tel: +254722207905; info@mespt.org", 14, y); y += 10;
+
+  // Bill To
+  doc.setFont("helvetica", "bold");
+  doc.text("Bill To:", 14, y); y += 8;
+  doc.setFont("helvetica", "normal");
+
+  const fullName = `${payload.primary.firstName} ${payload.primary.surname}`;
+  if (payload.primary.organization) doc.text(payload.primary.organization, 14, y), y += 6;
+  if (payload.primary.phone) doc.text(`Tel: ${payload.primary.phone}`, 14, y), y += 6;
+  if (fullName) doc.text(fullName, 14, y), y += 6;
+  if (payload.primary.position) doc.text(payload.primary.position, 14, y), y += 6;
+  if (payload.primary.email) doc.text(`Email: ${payload.primary.email}`, 14, y), y += 10;
+  doc.text("Ref: 2025 BDCG Inclusive Market Symposium", 14, y); y += 12;
+
+  // Fee map
+  const feeMap = {
+    nonresidential: { amount: 1000, label: 'Non-Residential Participant' },
+    residential: { amount: 1500, label: 'Residential Participant' },
+    hybridparticipant: { amount: 1200, label: 'Hybrid Participant' }
+  };
+
+  // Items header
+  doc.setFontSize(12);
+  doc.text("Items", 14, y); y += 6;
+  doc.setFontSize(10);
+  doc.setFillColor(220, 230, 241);
+  doc.rect(14, y, 182, 10, 'F');
+  doc.text("Description", 16, y + 7);
+  doc.text("Amount (KES)", 170, y + 7, { align: "right" });
+  y += 15;
+
+  let total = 0;
+
+  function addParticipantItems(p, label) {
+    const type = p.participantType?.toLowerCase() || "";
+    const feeInfo = feeMap[type] || { amount: 0, label: 'Participant' };
+    const participantLabel = label === 'Primary' ? 'Primary ' + feeInfo.label : `${label} (${feeInfo.label})`;
+
+    // Participant fee
+    doc.text(participantLabel, 16, y);
+    doc.text(feeInfo.amount.toLocaleString(), 170, y, { align: "right" });
+    y += 10;
+    total += feeInfo.amount;
+
+    // Exhibitions
+    if (p.exhibitions && p.exhibitions.length) {
+      p.exhibitions.forEach(ex => {
+        doc.text(`• ${ex.detail}`, 20, y);
+        doc.text(parseInt(ex.amount).toLocaleString(), 170, y, { align: "right" });
+        y += 10;
+        total += parseInt(ex.amount);
+      });
+    }
+
+    // Speaker sub-theme (for both primary and additional attendees)
+    if (p.category === "speaker" && p.subTheme) {
+      doc.setFont("helvetica", "italic");
+      doc.text(`Speaker Sub-Theme: ${p.subTheme}`, 16, y);
+      doc.setFont("helvetica", "normal");
+      y += 10;
+    }
+
+    // Subtotal
+    doc.setFont("helvetica", "bold");
+    doc.text(`Subtotal for ${label}:`, 16, y);
+    const participantTotal = (p.exhibitions || []).reduce((sum, ex) => sum + parseInt(ex.amount), feeInfo.amount);
+    doc.text(participantTotal.toLocaleString(), 170, y, { align: "right" });
+    doc.setFont("helvetica", "normal");
+    y += 15;
+  }
+
+  // Primary
+  addParticipantItems(payload.primary, "Primary");
+
+  // Additionals
+  (payload.additional || []).forEach((p, i) => {
+    // Ensure additional attendees have access to their sub-theme if they are speakers
+    if (p.category === 'speaker' && !p.subTheme && payload.primary.subTheme) {
+      p.subTheme = payload.primary.subTheme; // Use primary's sub-theme if not set
+    }
+    addParticipantItems(p, `Additional ${i + 1}`);
+  });
+
+  // Total line
+  doc.line(14, y, 196, y); y += 6;
+  doc.setFont("helvetica", "bold");
+  doc.text("Total:", 16, y);
+  doc.text(total.toLocaleString(), 170, y, { align: "right" });
+  y += 15;
+
+  // Bank details
+  doc.setFontSize(10);
+  doc.text("Bank Account Details:", 14, y); y += 7;
+  doc.text("Bank Name: KCB", 16, y); y += 6;
+  doc.text("Branch Name: Sarit Centre", 16, y); y += 6;
+  doc.text("Account Name: MESPT BUSINESS SERVICES", 16, y); y += 6;
+  doc.text("Account Number: 1129775283", 16, y); y += 6;
+  doc.text("Swift Address: KCBLKENX", 16, y); y += 15;
+
+  // Save + send
+  const safeName = fullName.replace(/[^a-z0-9]/gi, "_").toLowerCase() || "invoice";
+  const fileName = `${invNo}-${safeName}.pdf`;
+  doc.save(fileName);
+
+  const formData = new FormData();
+  formData.append("email", payload.primary.email);
+  formData.append("name", fullName);
+  formData.append("invoice_number", invNo);
+  formData.append("pdf", doc.output("blob"), fileName);
+
+  await fetch("send_invoice.php", { method: "POST", body: formData });
+  return { success: true, total: total };
+}
+
+   if (window.console) {
+    console.log("%cMade by Victoria Okello © 2025", "color: purple; font-size: 14px;");
+     }
+
+    // Add exhibition row
+    function addExhibitionRow() {
+      const container = document.getElementById('exhibitionsContainer');
+      const newRow = document.createElement('div');
+      newRow.className = 'exhibition-row';
+      newRow.style = 'display: flex; gap: 12px; margin-bottom: 12px; align-items: flex-end;';
+      
+      newRow.innerHTML = `
+        <div style="flex: 2;">
+          <input type="text" name="exhibitions[]" class="exhibition-detail" placeholder="Enter exhibition details" style="width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px;">
+        </div>
+        <div style="flex: 1;">
+          <input type="number" name="exhibitionAmounts[]" class="exhibition-amount" placeholder="Enter amount" style="width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px;">
+        </div>
+        <button type="button" class="remove-exhibition" style="margin-bottom: 6px; padding: 0; background: #f44336; border: none; border-radius: 4px; color: white; cursor: pointer; width: 32px; height: 38px; display: flex; align-items: center; justify-content: center;">
+          <span style="font-size: 20px; line-height: 1;">×</span>
+        </button>
+      `;
+      
+      container.appendChild(newRow);
+      
+      // Add event listener to the new remove button
+      const removeBtn = newRow.querySelector('.remove-exhibition');
+      removeBtn.addEventListener('click', function() {
+        container.removeChild(newRow);
+      });
+    }
+
+    // Handle add exhibition button clicks
+    document.addEventListener('click', function(e) {
+      if (e.target.closest('.add-exhibition')) {
+        addExhibitionRow();
       }
+    });
 
-      // Organization block (below header, left aligned)
-      doc.setFontSize(10);
-      let oy = logoY + logoHeight + 15;// start a bit lower than the date line
-      doc.text('MICRO ENTERPRISES SUPPORT', 14, oy); oy += 6;
-      doc.text('PROGRAMME TRUST (MESPT)', 14, oy); oy += 6;
-      doc.text('MESPT PLAZA, 01 TAUSI RD', 14, oy); oy += 6;
-      doc.text('BTWN WESTLANDS & MUTHITHI RD', 14, oy); oy += 6;
-      doc.text('NAIROBI, NAIROBI 00100', 14, oy);
-
-      // Bill To (left) below organization block
-      doc.setFontSize(12);
-      doc.text('Bill To:', 14, oy + 12);
-      doc.setFontSize(11);
-      const bp = payload.primary || {};
-      doc.text(`Name: ${bp.name || ''}`, 14, oy + 20);
-      doc.text(`Email: ${bp.email || ''}`, 14, oy + 26);
-      doc.text(`Organization: ${bp.organization || ''}`, 14, oy + 32);
-
-      // Pricing map (KSh)
-      const feeMap = { attendee: 20, staff: 30, speaker: 40, sponsor: 50 };
-
-      // Table header 
-      let y = oy + 46;
-      doc.setFontSize(12);
-      doc.text('Invoice Details', 14, y);
-      y += 6;
-      doc.setFontSize(11);
-      // Define column positions
-      const col = { email: 14, name: 80, cat: 120, amt: 190 };
-      // Header row
-      doc.text('Email', col.email, y);
-      doc.text('Name', col.name, y);
-      doc.text('Category', col.cat, y);
-      doc.text('Amount (KSh)', col.amt, y, { align: 'right' });
-      y += 6;
-      doc.setLineWidth(0.2);
-      doc.line(14, y, 196, y);
-      y += 8;
-
-      // Primary row
-      const p = payload.primary || {};
-      const pCat = String(p.category || '').toLowerCase();
-      const pAmount = feeMap[pCat] ?? 0;
-      doc.text(p.email || '', col.email, y);
-      doc.text(p.name || '', col.name, y);
-      doc.text(p.category || '', col.cat, y);
-      doc.text(String(pAmount), col.amt, y, { align: 'right' });
-      y += 8;
-
-      // Additional participants
-      const list = Array.isArray(payload.additional) ? payload.additional : [];
-      let total = pAmount;
-      if (list.length) {
-        list.forEach((a) => {
-          if (y > 270) { doc.addPage(); y = 20; }
-          const aCat = String(a.category || '').toLowerCase();
-          const aAmount = feeMap[aCat] ?? 0;
-          doc.text(a.email || '', col.email, y);
-          doc.text(a.name || '', col.name, y);
-          doc.text(a.category || '', col.cat, y);
-          doc.text(String(aAmount), col.amt, y, { align: 'right' });
-          y += 8;
-          total += aAmount;
-        });
+    // Toggle speaker fields based on category selection
+    document.getElementById('primaryCategory').addEventListener('change', function() {
+      const speakerFields = document.getElementById('speakerFields');
+      const subThemeRadios = document.getElementsByName('subTheme');
+      
+      if (this.value === 'speaker') {
+        speakerFields.style.display = 'block';
+        // Make sub-theme required when speaker is selected
+        subThemeRadios.forEach(radio => radio.required = true);
+      } else {
+        speakerFields.style.display = 'none';
+        // Remove required when not speaker
+        subThemeRadios.forEach(radio => radio.required = false);
       }
+      updateAddBtnState(); // Update button state when category changes
+    });
 
-      // Total
-      if (y > 260) { doc.addPage(); y = 20; }
-      doc.setFontSize(12);
-      doc.text(`Total: KSh ${total}`, 14, y + 6);
-
-      // Footer
-      y += 14;
-      if (y > 280) { doc.addPage(); y = 20; }
-      doc.setFontSize(10);
-      doc.text('Thank you for registering.', 14, y);
-
-      // Create a Blob from the PDF
-      const pdfBlob = doc.output('blob');
-      const fileName = `${invNo}-${(payload.primary.name || 'invoice').replace(/[^a-z0-9-_]+/gi,'_')}.pdf`;
-      const pdfFile = new File([pdfBlob], fileName, { type: 'application/pdf' });
-
-      console.log("Sending form data with file:", pdfFile);
-
-      // Build FormData for send_invoice.php
-      const formData = new FormData();
-      formData.append('email', payload.primary.email);   // recipient
-      formData.append('name', payload.primary.name);     // name
-      formData.append('invoice_number', invNo);          // optional
-      formData.append('pdf', pdfFile);                   // the file itself
-
-      try {
-        const res = await fetch('send_invoice.php', {
-          method: 'POST',
-          body: formData
-        });
-        const data = await res.json();
-
-        if (data.success) {
-          console.log("Invoice emailed:", data);
-          alert(`Invoice sent to ${payload.primary.email}`);
+    // Toggle 'Other' text field for speaker themes
+    document.addEventListener('change', function(e) {
+      if (e.target.name === 'subTheme') {
+        const otherThemeInput = document.getElementById('otherTheme');
+        if (e.target.value === 'Others') {
+          otherThemeInput.style.display = 'block';
+          otherThemeInput.setAttribute('required', '');
         } else {
-          console.error("Error from server:", data);
-          // Fall back to saving the PDF if email fails
-          doc.save(fileName);
-          alert(`Failed to send invoice: ${data.error || 'Unknown error'}. PDF has been downloaded instead.`);
+          otherThemeInput.style.display = 'none';
+          otherThemeInput.removeAttribute('required');
+          otherThemeInput.value = '';
         }
-      } catch (err) {
-        console.error("Network or server error:", err);
-        // Fall back to saving the PDF if there's an error
-        doc.save(fileName);
-        alert("Could not send invoice. PDF has been downloaded instead.");
       }
-    }
-
-    function updateAddBtnState() {
-      const addBtn = document.getElementById('addBtn');
-      if (addBtn) addBtn.disabled = !isPrimaryValid();
-    }
+    });
 
     // Show primary details and email container after primary email is entered
     document.getElementById('primaryEmail').addEventListener('blur', () => {
@@ -319,125 +552,267 @@
       div.innerHTML = `
         <input type="email" id="${entryId}_email" name="additionalEmails[]" placeholder="Enter email" autocomplete="email" required>
         <input type="text" id="${entryId}_name" name="additionalNames[]" placeholder="Full Name" autocomplete="name" required>
+        <input type="text" id="${entryId}_position" name="additionalPositions[]" placeholder="Position" autocomplete="organization-title" required>
         <input type="tel" id="${entryId}_phone" name="additionalPhones[]" placeholder="Phone" autocomplete="tel" required>
-        <div class="static-field org-static"></div>
-        <select id="${entryId}_category" name="additionalCategories[]" required>
+        <div class="form-group">
+          <label for="${entryId}_org">Organization:</label>
+          <input type="text" id="${entryId}_org" name="organization[]" placeholder="Enter organization" autocomplete="organization" required>
+        </div>
+        
+        <!-- Participant Type -->
+        <div class="form-group">
+          <label>Type of Participant:</label>
+          <select name="participantTypes[]" required>
+            <option value="" disabled selected>Select type of participant</option>
+            <option value="nonResidential">Non Residential</option>
+            <option value="residential">Residential</option>
+            <option value="hybridParticipant">Hybrid Participant</option>
+          </select>
+        </div>
+        
+        <!-- Category -->
+        <label>Category:</label>
+        <select id="${entryId}_category" name="additionalCategories[]" class="category-select" required>
           <option value="" disabled selected>Select category</option>
-          <option value="attendee">Attendee</option>
+          <option value="participant">Participant</option>
           <option value="speaker">Speaker</option>
-          <option value="sponsor">Sponsor</option>
-          <option value="staff">Staff</option>
         </select>
+        
+        <!-- Speaker Specific Fields -->
+        <div class="speaker-fields" style="display: none; margin-top: 15px; padding-top: 15px; border-top: 1px dashed var(--border);">
+          <h3 style="margin: 0 0 15px 0; font-size: 18px; color: var(--primary);">Speaker Information</h3>
+          
+          <div class="form-group">
+            <div class="sub-theme-label">Proposed Sub-Theme:</div>
+            <div style="margin-top: 8px;">
+              <div style="margin-bottom: 8px;">
+                <input type="radio" id="${entryId}_theme1" name="subTheme_${entryId}" value="Agri-Finance for Resilient Food Systems (investment) - KCV">
+                <label for="${entryId}_theme1" style="display: inline; margin-left: 8px;">Agri-Finance for Resilient Food Systems (investment) - KCV</label>
+              </div>
+              <div style="margin-bottom: 8px;">
+                <input type="radio" id="${entryId}_theme2" name="subTheme_${entryId}" value="Climate Change Adaptation & Green Transformation - Sustainable & Regenerative Agriculture – Ripple & MESPT">
+                <label for="${entryId}_theme2" style="display: inline; margin-left: 8px;">Climate Change Adaptation & Green Transformation - Sustainable & Regenerative Agriculture – Ripple & MESPT</label>
+              </div>
+              <div style="margin-bottom: 8px;">
+                <input type="radio" id="${entryId}_theme3" name="subTheme_${entryId}" value="Market Systems, Trade & Regional Integration - Private Sector Engagement & Partnerships - (investment) – Migingo, MEDA & TMA">
+                <label for="${entryId}_theme3" style="display: inline; margin-left: 8px;">Market Systems, Trade & Regional Integration - Private Sector Engagement & Partnerships - (investment) – Migingo, MEDA & TMA</label>
+              </div>
+              <div style="margin-bottom: 8px;">
+                <input type="radio" id="${entryId}_theme4" name="subTheme_${entryId}" value="Gender Equality & Social Inclusion (GESI) + Disability - Youth & Future Market Systems Leadership – Christian Aid & Tanager">
+                <label for="${entryId}_theme4" style="display: inline; margin-left: 8px;">Gender Equality & Social Inclusion (GESI) + Disability - Youth & Future Market Systems Leadership – Christian Aid & Tanager</label>
+              </div>
+              <div style="margin-bottom: 8px;">
+                <input type="radio" id="${entryId}_theme5" name="subTheme_${entryId}" value="Measuring Systemic Change & Policy Influence – IFDC">
+                <label for="${entryId}_theme5" style="display: inline; margin-left: 8px;">Measuring Systemic Change & Policy Influence – IFDC</label>
+              </div>
+              <div style="margin-bottom: 8px;">
+                <input type="radio" id="${entryId}_theme6" name="subTheme_${entryId}" value="Innovation & Scale – IDE & Heifer">
+                <label for="${entryId}_theme6" style="display: inline; margin-left: 8px;">Innovation & Scale – IDE & Heifer</label>
+              </div>
+              <div style="margin-bottom: 8px;">
+                <input type="radio" id="${entryId}_theme7" name="subTheme_${entryId}" value="Others">
+                <label for="${entryId}_theme7" style="display: inline; margin-left: 8px;">Others</label>
+                <input type="text" id="${entryId}_otherTheme" name="otherTheme_${entryId}" style="display: none; margin-left: 25px; width: calc(100% - 50px); margin-top: 5px; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border);" placeholder="Please specify your theme">
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Exhibition Options -->
+        <div class="form-group">
+          <div class="exhibition-options-label">Exhibition Options</div>
+          <div class="exhibitions-container">
+            <div class="exhibition-row" style="display: flex; gap: 12px; margin-bottom: 12px; align-items: flex-end;">
+              <div style="flex: 2;">
+                <label for="exhibitionDetail_${entryId}">Exhibition Details:</label>
+                <input type="text" id="exhibitionDetail_${entryId}" name="exhibitions[]" class="exhibition-detail" placeholder="Enter exhibition details" style="width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px;">
+              </div>
+              <div style="flex: 1;">
+                <label for="exhibitionAmount_${entryId}">Amount (KES):</label>
+                <input type="number" id="exhibitionAmount_${entryId}" name="exhibitionAmounts[]" class="exhibition-amount" placeholder="Enter amount" style="width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px;">
+              </div>
+              <button type="button" class="add-exhibition" style="margin-bottom: 6px; padding: 0; background: #4CAF50; border: none; border-radius: 4px; color: white; cursor: pointer; width: 32px; height: 38px; display: flex; align-items: center; justify-content: center;">
+                <span style="font-size: 20px; line-height: 1;">+</span>
+              </button>
+            </div>
+          </div>
+        </div>
+        
         <input type="hidden" class="org-hidden" name="organization[]" value="">
       `;
       document.getElementById('emails').appendChild(div);
+      
+      // Add event listener for category change to show/hide speaker fields
+      const categorySelect = div.querySelector('.category-select');
+      if (categorySelect) {
+        categorySelect.addEventListener('change', function() {
+          const speakerFields = div.querySelector('.speaker-fields');
+          if (speakerFields) {
+            speakerFields.style.display = this.value === 'speaker' ? 'block' : 'none';
+          }
+        });
+      }
+      
+      // Add event listener for 'Others' radio button in speaker fields
+      div.addEventListener('change', function(e) {
+        if (e.target.name && e.target.name.startsWith('subTheme_') && e.target.value === 'Others') {
+          const otherThemeInput = div.querySelector('input[type="text"][name^="otherTheme_"]');
+          if (otherThemeInput) {
+            otherThemeInput.style.display = 'block';
+            otherThemeInput.required = true;
+          }
+        } else if (e.target.name && e.target.name.startsWith('subTheme_')) {
+          const otherThemeInput = div.querySelector('input[type="text"][name^="otherTheme_"]');
+          if (otherThemeInput) {
+            otherThemeInput.style.display = 'none';
+            otherThemeInput.required = false;
+            otherThemeInput.value = '';
+          }
+        }
+      });
+      
       // After adding, sync organization value and lock editing
       syncOrgToChildren();
     }
 
     document.getElementById('addBtn').addEventListener('click', addEmail);
 
-    // Keep additional org fields synced and read-only based on primary org
+    // Track if organization fields have been manually edited
+    const orgFieldEdited = new Set();
+    
+    // Sync organization from primary to all additional entries that haven't been manually edited
     function syncOrgToChildren() {
-      const primaryOrg = document.getElementById('primaryOrganization')?.value || '';
-      document.querySelectorAll('#emails .org-static').forEach((el) => {
-        el.textContent = primaryOrg || 'Organization';
-      });
-      document.querySelectorAll('#emails .org-hidden').forEach((el) => {
-        el.value = primaryOrg;
+      const primaryOrg = document.getElementById('primaryOrganization').value.trim();
+      document.querySelectorAll('.additional-org').forEach(orgInput => {
+        const container = orgInput.closest('.email-container');
+        const index = container.dataset.index;
+        if (!orgFieldEdited.has(`org_${index}`)) {
+          orgInput.value = primaryOrg;
+        }
       });
     }
-
-    // Update on primary organization change
-    const primaryOrgEl = document.getElementById('primaryOrganization');
-    if (primaryOrgEl) {
-      primaryOrgEl.addEventListener('input', syncOrgToChildren);
-    }
+    
+    // Listen for changes to the primary organization
+    document.getElementById('primaryOrganization').addEventListener('input', syncOrgToChildren);
+    
+    // Track manual edits to organization fields
+    document.addEventListener('input', (e) => {
+      if (e.target.classList.contains('additional-org')) {
+        const container = e.target.closest('.email-container');
+        const index = container.dataset.index;
+        orgFieldEdited.add(`org_${index}`);
+      }
+    });
 
     // Handle form submission -> POST to PHP endpoint with inline validation
     document.getElementById('multipleForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const form = e.currentTarget;
-      // Clear previous invalid states
-      document.querySelectorAll('.invalid').forEach(el => el.classList.remove('invalid'));
+  e.preventDefault();
+  const form = e.currentTarget;
+  document.querySelectorAll('.invalid').forEach(el => el.classList.remove('invalid'));
 
-      // Validate primary fields
-      const requiredPrimary = ['primaryEmail','primaryName','primaryPhone','primaryOrganization','primaryCategory'];
-      for (const id of requiredPrimary) {
-        const el = document.getElementById(id);
-        if (!el || !el.value) {
-          if (el) el.classList.add('invalid');
-          showMessage('error', 'Please complete all primary fields.');
-          return;
+  // Collect exhibitions for primary
+  const primaryExhibitions = [];
+  document.querySelectorAll('#exhibitionsContainer .exhibition-row').forEach(row => {
+    const detail = row.querySelector('.exhibition-detail')?.value.trim();
+    const amount = row.querySelector('.exhibition-amount')?.value.trim();
+    if (detail && amount) primaryExhibitions.push({ detail, amount });
+  });
+
+  // Primary payload
+  const payload = {
+    type: 'multiple',
+    primary: {
+      email: document.getElementById('primaryEmail').value.trim(),
+      firstName: document.getElementById('primaryfirstName').value.trim(),
+      surname: document.getElementById('primarysurname').value.trim(),
+      phone: document.getElementById('primaryPhone').value.trim(),
+      position: document.getElementById('primaryposition')?.value?.trim() || '',
+      organization: document.getElementById('primaryOrganization').value.trim(),
+      category: document.getElementById('primaryCategory').value,
+      participantType: document.getElementById('participantType').value,
+      subTheme: document.querySelector('input[name="subTheme"]:checked')?.value || '',
+      exhibitions: primaryExhibitions
+    },
+    additional: []
+  };
+
+    // Additional participants
+    document.querySelectorAll('#emails .email-entry').forEach(entry => {
+      const email = entry.querySelector('input[type="email"]')?.value?.trim() || '';
+      const name = entry.querySelector('input[type="text"]:not([name^="additionalPositions"])')?.value?.trim() || '';
+      const position = entry.querySelector('input[name^="additionalPositions"]')?.value?.trim() || '';
+      const phone = entry.querySelector('input[type="tel"]')?.value?.trim() || '';
+      const organization = entry.querySelector('input[name="organization[]"]')?.value?.trim() || '';
+      const category = entry.querySelector('select[name="additionalCategories[]"]')?.value || '';
+      const participantType = entry.querySelector('select[name="participantTypes[]"]')?.value || '';
+      
+      // Get the selected sub-theme for this attendee
+      let subTheme = '';
+      const selectedTheme = entry.querySelector('input[name^="subTheme_"]:checked');
+      if (selectedTheme) {
+        if (selectedTheme.value === 'Others') {
+          // If 'others' is selected, get the custom theme text
+          const otherThemeInput = entry.querySelector('input[type="text"][name^="otherTheme_"]');
+          if (otherThemeInput) {
+            subTheme = otherThemeInput.value.trim();
+          }
+        } else {
+          subTheme = selectedTheme.value;
         }
       }
 
-      // Collect primary
-      const payload = {
-        type: 'multiple',
-        primary: {
-          email: document.getElementById('primaryEmail').value.trim(),
-          name: document.getElementById('primaryName')?.value?.trim() || '',
-          phone: document.getElementById('primaryPhone')?.value?.trim() || '',
-          organization: document.getElementById('primaryOrganization')?.value?.trim() || '',
-          category: document.getElementById('primaryCategory')?.value || ''
-        },
-        additional: []
-      };
-
-      // Collect additional entries, validating each row
-      let invalidRow = false;
-      document.querySelectorAll('#emails .email-entry').forEach(entry => {
-        const email = entry.querySelector('input[type="email"]')?.value?.trim() || '';
-        const textInputs = entry.querySelectorAll('input[type="text"]');
-        const name = textInputs[0]?.value?.trim() || '';
-        const phone = entry.querySelector('input[type="tel"]')?.value?.trim() || '';
-        const orgHidden = entry.querySelector('.org-hidden')?.value?.trim() || '';
-        const category = entry.querySelector('select')?.value || '';
-        // Validate row
-        if (!email || !name || !phone || !orgHidden || !category) {
-          // mark visible fields invalid
-          if (!email) entry.querySelector('input[type="email"]').classList.add('invalid');
-          if (!name) textInputs[0].classList.add('invalid');
-          if (!phone) entry.querySelector('input[type="tel"]').classList.add('invalid');
-          if (!category) entry.querySelector('select').classList.add('invalid');
-          invalidRow = true;
-        }
-        payload.additional.push({ email, name, phone, organization: orgHidden, category });
+      // Exhibitions for this participant
+      const exhibitions = [];
+      entry.querySelectorAll('.exhibition-row').forEach(row => {
+        const detail = row.querySelector('.exhibition-detail')?.value.trim();
+        const amount = row.querySelector('.exhibition-amount')?.value.trim();
+        if (detail && amount) exhibitions.push({ detail, amount });
       });
 
-      if (invalidRow) {
-        showMessage('error', 'Please complete all fields in additional entries.');
-        return;
-      }
+      payload.additional.push({ 
+        email, 
+        name, 
+        position,
+        phone, 
+        organization, 
+        category, 
+        participantType, 
+        subTheme,
+        exhibitions 
+      });
+  });
 
-      try {
-        const res = await fetch('save_registration.php', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        const data = await res.json();
-        if (data.message) {
-          showMessage('success', data.message);
-          // Generate invoice PDF for multiple registration
-          await generateInvoice(payload);
-          // Reset form
-          form.reset();
-          // Hide sections again
-          document.getElementById('primaryDetails').style.display = 'none';
-          document.getElementById('emailContainer').style.display = 'none';
-          // Clear any additional entries
-          document.getElementById('emails').innerHTML = '';
-          updateAddBtnState();
-        } else {
-          showMessage('error', data.error || 'Failed to save registration.');
-        }
-      } catch (err) {
-        showMessage('error', 'Network error. Please try again.');
-        console.error(err);
-      }
+  try {
+    const res = await fetch('save_registration.php', {
+      method: 'POST',
+      body: JSON.stringify(payload)
     });
+    const data = await res.json();
+    if (data.message) {
+      showMessage('success', data.message);
+      const invoiceResult = await generateInvoice(payload);
+      // Update payload with total amount before saving
+      payload.totalAmount = invoiceResult.total;
+      // Send the registration data again with the total amount
+      await fetch('save_registration.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      form.reset();
+      document.getElementById('primaryDetails').style.display = 'none';
+      document.getElementById('emailContainer').style.display = 'none';
+      document.getElementById('emails').innerHTML = '';
+      updateAddBtnState();
+    } else {
+      showMessage('error', data.error || 'Failed to save registration.');
+    }
+  } catch (err) {
+    showMessage('error', 'Network error. Please try again.');
+    console.error(err);
+  }
+});
+
   </script>
 </body>
 </html>

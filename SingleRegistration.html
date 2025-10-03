@@ -21,7 +21,8 @@
     h2 { margin: 0 0 16px; font-size: 24px; letter-spacing: .2px; }
 
     .form-group { margin-bottom: 14px; }
-    label { display: block; font-size: 14px; color: var(--muted); margin-bottom: 6px; }
+    label { display: block; font-size: 14px; color: #2563eb; margin-bottom: 6px; font-weight: 500; }
+    h2 { color: #2563eb; }
     input[type="text"], input[type="email"], input[type="tel"], select {
       width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: #fff; color: var(--text);
       outline: none; transition: box-shadow .15s ease, border-color .15s ease;
@@ -32,6 +33,11 @@
     .btn-primary { background: var(--primary); color: #fff; }
     .btn-primary:hover { filter: brightness(1.05); }
     .btn-primary:active { transform: translateY(1px); }
+/* 
+  Author: Victoria Okello
+  Project: Conference Registration System 
+  Year: 2025
+*/
 
     /* Inline messages */
     .alert { padding: 10px 12px; border-radius: 10px; margin-bottom: 12px; font-size: 14px; }
@@ -42,6 +48,7 @@
 </head>
 <body>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
   <div class="page">  
     <div class="card">
       <h2>Single Registration</h2>
@@ -50,42 +57,185 @@
       <form id="singleForm">
       <div class="form-group">
         <label for="singleEmail">Email:</label>
-        <input type="email" id="singleEmail" name="email" autocomplete="email" required>
+        <input type="email" id="singleEmail" name="email" autocomplete="email" placeholder="Enter your email address" required>
       </div>
       <div id="singleDetails" style="display:none;">
         <div class="form-group">
-          <label for="singleName">Full Name:</label>
-          <input type="text" id="singleName" name="name" autocomplete="name" required>
+          <label for="firstName">First Name:</label>
+          <input type="text" id="firstName" name="firstName" autocomplete="name" placeholder="Enter first name" required>
+        </div>
+        <div class="form-group">
+          <label for="surname">Surname:</label>
+          <input type="text" id="surname" name="surname" autocomplete="name" placeholder="Enter surname" required>
+        </div>
+        <div class="form-group">
+          <label for="position">Position:</label>
+          <input type="text" id="position" name="position" autocomplete="organization-title" placeholder="Enter your position/title" required>
         </div>
         <div class="form-group">
           <label for="singlePhone">Phone:</label>
-          <input type="tel" id="singlePhone" name="phone" autocomplete="tel" required>
+          <input type="tel" id="singlePhone" name="phone" autocomplete="tel" placeholder="Enter phone number" required>
         </div>
         <div class="form-group">
           <label for="singleOrganization">Organization:</label>
-          <input type="text" id="singleOrganization" name="organization" autocomplete="organization" required>
+          <input type="text" id="singleOrganization" name="organization" autocomplete="organization" placeholder="Enter organization name" required>
+        </div>
+        <div class="form-group">
+          <label for="participantType">Type of Participant:</label>
+          <select id="participantType" required>
+            <option value="" disabled selected>Select type of participant</option>
+            <option value="nonResidential">Non Residential</option>
+            <option value="residential">Residential</option>
+            <option value="hybridParticipant">Hybrid Participant</option>
+          </select>
+        </div>
+        <div id="exhibitionsContainer">
+          <div class="exhibition-row" style="display: flex; gap: 12px; margin-bottom: 12px; align-items: flex-end;">
+            <div style="flex: 2;">
+              <label for="exhibitions" id="exhibitionLabel">Exhibition Details:</label>
+              <input type="text" name="exhibitions[]" class="exhibition-detail" id="exhibitions" placeholder="Enter exhibition details" required style="width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px;">
+            </div>
+            <div style="flex: 1;">
+              <label for="exhibitionAmounts" id="exhibitionAmountLabel">Amount (KES):</label>
+              <input type="number" name="exhibitionAmounts[]" class="exhibition-amount" id="exhibitionAmounts" placeholder="Enter amount" required style="width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px;">
+            </div>
+            <button type="button" class="btn btn-primary" onclick="addExhibitionRow()" style="margin-bottom: 6px; padding: 0; background: #4CAF50; border: none; border-radius: 4px; color: white; cursor: pointer; width: 32px; height: 38px; display: flex; align-items: center; justify-content: center;">
+              <span style="font-size: 20px; line-height: 1;">+</span>
+            </button>
+          </div>
         </div>
         <div class="form-group">
           <label for="singleCategory">Category:</label>
           <select id="singleCategory" required>
             <option value="" disabled selected>Select category</option>
-            <option value="attendee">Attendee</option>
+            <option value="participant">Participant</option>
             <option value="speaker">Speaker</option>
-            <option value="sponsor">Sponsor</option>
-            <option value="staff">Staff</option>
           </select>
+        </div>
+        
+        <!-- Speaker Specific Fields -->
+        <div id="speakerFields" style="display: none; margin-top: 15px; padding-top: 15px; border-top: 1px dashed var(--border);">
+          <h3 style="margin: 0 0 15px 0; font-size: 18px; color: var(--primary);">Speaker Information</h3>
+          
+          <div class="form-group">
+            <div id="subThemeLabel">Proposed Sub-Theme:</div>
+            <div style="margin-top: 8px;">
+              <div style="margin-bottom: 8px;">
+                <input type="radio" id="theme1" name="subTheme" value="Agri-Finance for Resilient Food Systems (investment) - KCV">
+                <label for="theme1" style="display: inline; margin-left: 8px;">Agri-Finance for Resilient Food Systems (investment) - KCV</label>
+              </div>
+              <div style="margin-bottom: 8px;">
+                <input type="radio" id="theme2" name="subTheme" value="Climate Change Adaptation & Green Transformation - Sustainable & Regenerative Agriculture – Ripple & MESPT">
+                <label for="theme2" style="display: inline; margin-left: 8px;">Climate Change Adaptation & Green Transformation - Sustainable & Regenerative Agriculture – Ripple & MESPT</label>
+              </div>
+              <div style="margin-bottom: 8px;">
+                <input type="radio" id="theme3" name="subTheme" value="Market Systems, Trade & Regional Integration - Private Sector Engagement & Partnerships - (investment) – Migingo, MEDA & TMA">
+                <label for="theme3" style="display: inline; margin-left: 8px;">Market Systems, Trade & Regional Integration - Private Sector Engagement & Partnerships - (investment) – Migingo, MEDA & TMA</label>
+              </div>
+              <div style="margin-bottom: 8px;">
+                <input type="radio" id="theme4" name="subTheme" value="Gender Equality & Social Inclusion (GESI) + Disability - Youth & Future Market Systems Leadership – Christian Aid & Tanager">
+                <label for="theme4" style="display: inline; margin-left: 8px;">Gender Equality & Social Inclusion (GESI) + Disability - Youth & Future Market Systems Leadership – Christian Aid & Tanager</label>
+              </div>
+              <div style="margin-bottom: 8px;">
+                <input type="radio" id="theme5" name="subTheme" value="Measuring Systemic Change & Policy Influence – IFDC">
+                <label for="theme5" style="display: inline; margin-left: 8px;">Measuring Systemic Change & Policy Influence – IFDC</label>
+              </div>
+              <div style="margin-bottom: 8px;">
+                <input type="radio" id="theme6" name="subTheme" value="Innovation & Scale – IDE & Heifer">
+                <label for="theme6" style="display: inline; margin-left: 8px;">Innovation & Scale – IDE & Heifer</label>
+              </div>
+              <div style="margin-bottom: 8px;">
+                <input type="radio" id="theme7" name="subTheme" value="Others">
+                <label for="theme7" style="display: inline; margin-left: 8px;">Others</label>
+                <input type="text" id="otherTheme" name="otherTheme" style="display: none; margin-left: 25px; width: calc(100% - 50px); margin-top: 5px; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border);" placeholder="Please specify your theme">
+              </div>
+            </div>
+          </div>
         </div>
       </div>
       <button type="submit" class="btn btn-primary" style="margin-top: 10px;">Submit</button>
       </form>
     </div>
   </div>
+<!-- 
+  Conference Registration System
+  Author: Victoria Okello
+  Created: 2025
+  Ownership: This code is authored by Victoria Okello
+-->
 
   <script>
     // Reveal details after email entered
     document.getElementById('singleEmail').addEventListener('blur', () => {
       if (document.getElementById('singleEmail').value) {
         document.getElementById('singleDetails').style.display = 'block';
+      }
+    });
+
+    // Toggle speaker-specific fields based on category selection
+    document.getElementById('singleCategory').addEventListener('change', function() {
+      const speakerFields = document.getElementById('speakerFields');
+      const speakerTitle = document.getElementById('speakerTitle');
+      const speakerBio = document.getElementById('speakerBio');
+      const subThemes = document.querySelectorAll('input[name="subTheme"]');
+      
+      if (this.value === 'speaker') {
+        speakerFields.style.display = 'block';
+        // Make speaker fields required
+        if (speakerTitle) speakerTitle.setAttribute('required', '');
+        if (speakerBio) speakerBio.setAttribute('required', '');
+        // Make subTheme radio buttons required
+        subThemes.forEach(radio => radio.setAttribute('required', ''));
+      } else {
+        speakerFields.style.display = 'none';
+        // Remove required attributes if not a speaker
+        if (speakerTitle) speakerTitle.removeAttribute('required');
+        if (speakerBio) speakerBio.removeAttribute('required');
+        // Remove required from subTheme radio buttons
+        subThemes.forEach(radio => radio.removeAttribute('required'));
+      }
+    });
+    
+    // Add exhibition row
+    function addExhibitionRow() {
+      const container = document.getElementById('exhibitionsContainer');
+      const newRow = document.createElement('div');
+      newRow.className = 'exhibition-row';
+      newRow.style = 'display: flex; gap: 16px; margin-bottom: 12px; align-items: flex-end;';
+      
+      newRow.innerHTML = `
+        <div style="flex: 2;">
+          <input type="text" name="exhibitions[]" class="exhibition-detail" placeholder="Enter exhibition details" style="width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px;">
+        </div>
+        <div style="flex: 1;">
+          <input type="number" name="exhibitionAmounts[]" class="exhibition-amount" placeholder="Enter amount" style="width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px;">
+        </div>
+        <button type="button" class="remove-exhibition" style="margin-bottom: 6px; padding: 0; background: #f44336; border: none; border-radius: 4px; color: white; cursor: pointer; width: 32px; height: 38px; display: flex; align-items: center; justify-content: center;">
+          <span style="font-size: 20px; line-height: 1;">×</span>
+        </button>
+      `;
+      
+      container.appendChild(newRow);
+      
+      // Add event listener to the new remove button
+      const removeBtn = newRow.querySelector('.remove-exhibition');
+      removeBtn.addEventListener('click', function() {
+        container.removeChild(newRow);
+      });
+    }
+    
+    // Toggle 'Other' text field
+    document.addEventListener('change', function(e) {
+      if (e.target.name === 'subTheme') {
+        const otherThemeInput = document.getElementById('otherTheme');
+        if (e.target.value === 'Others') {
+          otherThemeInput.style.display = 'block';
+          otherThemeInput.setAttribute('required', '');
+        } else {
+          otherThemeInput.style.display = 'none';
+          otherThemeInput.removeAttribute('required');
+          otherThemeInput.value = '';
+        }
       }
     });
 
@@ -103,25 +253,80 @@
       // Clear previous invalid states
       form.querySelectorAll('.invalid').forEach(el => el.classList.remove('invalid'));
 
-      // Validate required fields
-      const requiredIds = ['singleEmail','singleName','singlePhone','singleOrganization','singleCategory'];
-      for (const id of requiredIds) {
-        const el = document.getElementById(id);
-        if (!el || !el.value) {
-          if (el) el.classList.add('invalid');
-          showMessage('error', 'Please fill out all required fields.');
-          return;
-        }
+      // 1. Gather all field values
+      const firstName = document.getElementById('firstName').value.trim();
+      const surname = document.getElementById('surname').value.trim();
+      const email = document.getElementById('singleEmail').value.trim();
+      const phone = document.getElementById('singlePhone').value.trim();
+      const organization = document.getElementById('singleOrganization').value.trim();
+      const categoryValue = document.getElementById('singleCategory').value;
+      const position = document.getElementById('position').value.trim();
+      const participantType = document.getElementById('participantType').value;
+
+      // Basic validation
+      if (!firstName || !surname || !email || !phone || !organization || !categoryValue || !position || !participantType) {
+        showMessage('error', 'Please fill out all required fields.');
+        return;
       }
 
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        showMessage('error', 'Please enter a valid email address.');
+        return;
+      }
+
+      // 2. Create payload first
       const payload = {
         type: 'single',
-        email: document.getElementById('singleEmail').value.trim(),
-        name: document.getElementById('singleName').value.trim(),
-        phone: document.getElementById('singlePhone').value.trim(),
-        organization: document.getElementById('singleOrganization').value.trim(),
-        category: document.getElementById('singleCategory').value,
+        firstName,
+        surname,
+        email,
+        phone,
+        organization,
+        position,
+        category: categoryValue,
+        participantType,
+        registrationDate: new Date().toISOString()
       };
+
+      // 3. Add exhibitions if any fields are filled
+      const exhibitionDetails = [];
+      const exhibitionInputs = document.querySelectorAll('.exhibition-detail');
+      const amountInputs = document.querySelectorAll('.exhibition-amount');
+
+      exhibitionInputs.forEach((detail, index) => {
+        const detailVal = detail.value.trim();
+        const amountVal = amountInputs[index]?.value;
+
+        // Only include if both fields are filled
+        if (detailVal && amountVal) {
+          exhibitionDetails.push({
+            detail: detailVal,
+            amount: parseFloat(amountVal)
+          });
+        }
+      });
+
+      // Only add to payload if there are valid exhibition entries
+      if (exhibitionDetails.length > 0) {
+        payload.exhibitions = exhibitionDetails;
+      }
+
+      // 4. If speaker, add subTheme
+      if (categoryValue === 'speaker') {
+        const subTheme = document.querySelector('input[name="subTheme"]:checked')?.value;
+        const otherTheme = document.getElementById('otherTheme')?.value.trim();
+
+        if (!subTheme) {
+          showMessage('error', 'Please select a sub-theme.');
+          return;
+        }
+
+        payload.speakerInfo = {
+          subTheme: subTheme === 'Others' && otherTheme ? otherTheme : subTheme
+        };
+      }
 
       try {
         // First save the registration
@@ -153,6 +358,19 @@
           throw new Error(pdfResult?.error || 'Failed to generate and send invoice');
         }
         
+        // Update the registration with the total amount
+        if (payload.totalAmount) {
+          await fetch('save_registration.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              ...payload,
+              totalAmount: payload.totalAmount,
+              invoiceNumber: pdfResult.invoiceNumber
+            })
+          });
+        }
+        
         // If we get here, both registration and invoice were successful
         showMessage('success', 'Registration successful! Invoice has been sent to your email.');
         form.reset();
@@ -178,165 +396,214 @@
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
         const now = new Date();
-        const invNo = 'INV-' + now.getFullYear() + String(now.getMonth()+1).padStart(2,'0') + String(now.getDate()).padStart(2,'0') + '-' + String(now.getHours()).padStart(2,'0') + String(now.getMinutes()).padStart(2,'0') + String(now.getSeconds()).padStart(2,'0');
-
-        // Header
-        doc.setFontSize(18);
         const pageWidth = doc.internal.pageSize.getWidth();
-        doc.text('INVOICE', pageWidth / 2, 18, { align: 'center' });
-        doc.setFontSize(11);
-        doc.text(`Invoice No: ${invNo}`, 14, 26);
-        doc.text(`Date: ${now.toLocaleString()}`, 14, 32);
-        
-        // Logo (top-right corner)
-        const logoWidth = 40; // adjust as needed
-        const logoHeight = 20; // adjust as needed
-        const logoX = pageWidth - logoWidth - 14;
-        const logoY = 10;
-        
-        // Try to add logo if available
+
+        // Generate invoice number
+        const invNo = "INV-" +
+          now.getFullYear() +
+          String(now.getMonth() + 1).padStart(2, "0") +
+          String(now.getDate()).padStart(2, "0") +
+          "-" +
+          String(now.getHours()).padStart(2, "0") +
+          String(now.getMinutes()).padStart(2, "0") +
+          String(now.getSeconds()).padStart(2, "0");
+
+        // === LOGO (top center) ===
         try {
           const img = new Image();
-          img.crossOrigin = 'anonymous';
-          img.src = 'Mespt_logo.png'; // Using relative path to the logo in the same directory
+          img.src = "Mespt_logo.png";
           await new Promise((resolve, reject) => {
             img.onload = resolve;
             img.onerror = reject;
           });
-          doc.addImage(img, 'PNG', logoX, logoY, logoWidth, logoHeight);
+          const logoWidth = 50;
+          const logoHeight = 25;
+          const logoX = (pageWidth - logoWidth) / 2;
+          const logoY = 8;
+          doc.addImage(img, "PNG", logoX, logoY, logoWidth, logoHeight);
         } catch (e) {
-          console.warn('Logo not added to invoice (single):', e);
+          console.warn("Logo not added:", e);
         }
-      
-        // Organization block (below header, left aligned)
+
+        // === HEADER ===
+        doc.setFontSize(18);
+        doc.text("INVOICE", pageWidth / 2, 40, { align: "center" });
         doc.setFontSize(10);
-        let oy = logoY + logoHeight + 15; // start below the logo with extra spacing
-        doc.text('MICRO ENTERPRISES SUPPORT', 14, oy); oy += 6;
-        doc.text('PROGRAMME TRUST (MESPT)', 14, oy); oy += 6;
-        doc.text('MESPT PLAZA, 01 TAUSI RD', 14, oy); oy += 6;
-        doc.text('BTWN WESTLANDS & MUTHITHI RD', 14, oy); oy += 6;
-        doc.text('NAIROBI, NAIROBI 00100', 14, oy);
+        doc.text(`Date: ${now.toLocaleDateString()}`, pageWidth - 70, 20);
+        doc.text(`Invoice No: ${invNo}`, pageWidth - 70, 26);
 
-        // Bill To section
-        doc.text('Bill To:', 14, oy + 12);
-        doc.setFontSize(11);
-        doc.text(`Name: ${payload.name || ''}`, 14, oy + 20);
-        doc.text(`Email: ${payload.email || ''}`, 14, oy + 26);
-        doc.text(`Organization: ${payload.organization || ''}`, 14, oy + 32);
-        
-        // Pricing by category (KSh)
-        const feeMap = { attendee: 20, staff: 30, speaker: 40, sponsor: 50 };
-        const catKey = String(payload.category || '').toLowerCase();
-        const amount = feeMap[catKey] ?? 0;
+        // === ORGANIZATION BLOCK ===
+        let y = 55;
+        doc.setFontSize(10);
+        doc.text("Micro Enterprises Support Programme Trust", 14, y); y += 6;
+        doc.text("Tausi Lane, Between Muthithi Rd & Westlands Rd, Gate 01", 14, y); y += 6;
+        doc.text("P.O BOX 187 – 00606- Sarit Centre", 14, y); y += 6;
+        doc.text("Nairobi", 14, y); y += 6;
+        doc.text("Tel: +254722207905; info@mespt.org", 14, y); y += 10;
 
-        // Table (start below Bill To)
-        let y = oy + 50;
-        doc.setFontSize(12);
-        doc.text('Items', 14, y);
-        y += 6;
-        doc.setFontSize(11);
-        
-        // Table header
-        doc.text('Description', 14, y);
-        doc.text('Amount (KSh)', 160, y, { align: 'right' });
-        y += 6;
-        
-        // Table row
-        doc.setLineWidth(0.2);
-        doc.line(14, y, 196, y);
+        // === BILL TO BLOCK ===
+        doc.setFont("helvetica", "bold");
+        doc.text("Bill To:", 14, y);
+        doc.setFont("helvetica", "normal");
         y += 8;
         
-        // Item details
-        doc.text(`Conference Registration (${payload.category || 'N/A'})`, 14, y);
-        doc.text(String(amount), 196, y, { align: 'right' });
-        y += 15;
+        const fullName = `${payload.firstName || ""} ${payload.surname || ""}`.trim();
+        if (payload.organization) doc.text(payload.organization, 14, y); y += 6;
+        if (payload.phone) doc.text(`Tel: ${payload.phone}`, 14, y); y += 6;
+        if (fullName) doc.text(fullName, 14, y); y += 6;
+        if (payload.position) doc.text(payload.position, 14, y); y += 6;
+        if (payload.email) doc.text(`Email: ${payload.email}`, 14, y); y += 10;
 
-        // Total
+        // Reference
+        doc.text("Ref: 2025 BDCG Inclusive Market Symposium", 14, y);
+        y += 12;
+
+        // === AMOUNT MAPPING ===
+        const amountMap = {
+          'nonresidential': 1000,
+          'residential': 1500,
+          'hybridparticipant': 500
+        };
+
+        // Get participant type from payload (convert to lowercase for case-insensitive matching)
+        const participantType = payload.participantType ? payload.participantType.toLowerCase() : '';
+        
+        // Calculate base amount based on participant type
+        let baseAmount = amountMap[participantType] || 0;
+        let exhibitionsTotal = 0;
+        
+        // Add exhibition items to the invoice
+        if (payload.exhibitions && payload.exhibitions.length > 0) {
+          payload.exhibitions.forEach(item => {
+            if (item.detail && item.amount) {
+              exhibitionsTotal += parseFloat(item.amount) || 0;
+            }
+          });
+        }
+        
+        // Debug log to verify values
+        console.log('Participant Type:', participantType);
+        console.log('Base Amount:', baseAmount);
+        console.log('Exhibitions Total:', exhibitionsTotal);
+
+        // === ITEMS TABLE ===
         doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
-        doc.text('Total:', 14, y);
-        doc.text(`KSh ${amount}`, 196, y, { align: 'right' });
+        doc.text("Items", 14, y);
+        y += 6;
+
+        // Table header
+        doc.setFontSize(10);
+        doc.setDrawColor(200);
+        doc.setLineWidth(0.1);
+        
+        // Draw table header
+        doc.setFillColor(220, 230, 241);
+        doc.rect(14, y, 182, 10, 'F');
+        doc.text("Description", 16, y + 7);
+        doc.text("Amount (KES)", 170, y + 7, { align: "right" });
         y += 10;
 
-        // Footer
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        doc.text('Thank you for registering.', 14, y + 10);
+        // Draw line under header
+        doc.line(14, y, 196, y);
+        y += 5;
+        
+        // Add participant type fee
+        if (baseAmount > 0) {
+          const participantTypeText = {
+            'nonresidential': 'Non-Residential Participant',
+            'residential': 'Residential Participant',
+            'international': 'International Participant'
+          }[participantType] || 'Participant Fee';
+          
+          doc.text(participantTypeText, 16, y + 5);
+          doc.text(baseAmount.toLocaleString(), 170, y + 5, { align: "right" });
+          y += 10;
 
-        // Generate the PDF as a blob
-        const pdfBlob = doc.output('blob');
+          // Add sub-theme row if this is a speaker
+          if (payload.category === 'speaker' && payload.speakerInfo?.subTheme) {
+            doc.text('Speaker Sub-Theme:', 16, y + 5);
+            doc.text(payload.speakerInfo.subTheme, 50, y + 5);
+            y += 10;
+          }
+        }
         
+        // Add exhibition items
+        if (payload.exhibitions && payload.exhibitions.length > 0) {
+          payload.exhibitions.forEach(item => {
+            if (item.detail && item.amount) {
+              doc.text(`Exhibition: ${item.detail}`, 16, y + 5);
+              doc.text(parseFloat(item.amount).toLocaleString(), 170, y + 5, { align: "right" });
+              y += 10;
+            }
+          });
+        }
+        
+     if (window.console) {
+       console.log("%cMade by Victoria Okello © 2025", "color: purple; font-size: 14px;");
+       }
+
+        // Add line before total
+        y += 5;
+        doc.line(14, y, 196, y);
+        y += 5;
+        
+        // Show total
+        const totalAmount = baseAmount + exhibitionsTotal;
+        doc.setFont("helvetica", "bold");
+        doc.text("Total:", 16, y + 7);
+        doc.text(totalAmount.toLocaleString(), 170, y + 7, { align: "right" });
+        doc.setFont("helvetica", "normal");
+        y += 15;
+        
+        // Store the total amount in the payload
+        payload.totalAmount = totalAmount;
+
+        // === BANK DETAILS ===
+        doc.setFontSize(10);
+        doc.text("Bank Account Details:", 14, y); y += 7;
+        doc.text("Bank Name: KCB", 16, y); y += 6;
+        doc.text("Branch Name: Sarit Centre", 16, y); y += 6;
+        doc.text("Account Name: MESPT BUSINESS SERVICES", 16, y); y += 6;
+        doc.text("Account Number: 1129775283", 16, y); y += 6;
+        doc.text("Swift Address: KCBLKENX", 16, y); y += 15;
+
         // Generate a safe filename
-        const safeName = (payload.name || 'invoice').replace(/[^a-z0-9]/gi, '_').toLowerCase();
-        const fileName = `invoice_${invNo}_${safeName}.pdf`;
+        const safeName = fullName.replace(/[^a-z0-9]/gi, '_').toLowerCase() || 'invoice';
+        const fileName = `${invNo}-${safeName}.pdf`;
         
-        // Save the PDF locally (for debugging)
+        // Save the PDF locally
         doc.save(fileName);
         
         // Prepare form data for email
         const formData = new FormData();
+        const pdfBlob = doc.output('blob');
         
-        try {
-            // Create a Blob from the PDF data
-            const pdfBlob = doc.output('blob');
-            
-            // Create a sanitized filename with invoice number and name
-            const sanitizedName = (payload.name || 'invoice').replace(/[^a-z0-9]/gi, '_').toLowerCase();
-            const pdfFileName = `${invNo}-${sanitizedName}.pdf`;
-            
-            // Append the PDF blob directly to FormData with the formatted filename
-            formData.append('pdf', pdfBlob, pdfFileName);
-            
-            // Append other form data
-            formData.append('email', payload.email || '');
-            formData.append('name', payload.name || '');
-            formData.append('invoice_number', invNo);
-            
-            console.log('Sending form data with file:', {
-                fileName: pdfFileName,
-                size: pdfBlob.size,
-                type: 'application/pdf'
-            });
-            
-            // Send the email
-            const res = await fetch('send_invoice.php', { 
-                method: 'POST',
-                body: formData
-                // Don't set Content-Type header - let the browser set it with the boundary
-            });
-            
-            // Handle the response
-            const responseText = await res.text();
-            
-            try {
-                const result = JSON.parse(responseText);
-                if (!res.ok) {
-                    throw new Error(result.error || `HTTP error! status: ${res.status}`);
-                }
-                
-                // Return success response
-                return {
-                    success: true,
-                    message: result.message || 'Email sent successfully',
-                    pdfBlob: pdfBlob
-                };
-                
-            } catch (e) {
-                console.error('Invalid JSON response:', responseText);
-                throw new Error(`Invalid server response: ${responseText.substring(0, 200)}`);
-            }
-            
-        } catch (error) {
-            console.error('Error in generateInvoice:', error);
-            throw error; // Re-throw to be caught by the outer try-catch
+        // Add form data
+        formData.append('email', payload.email || '');
+        formData.append('name', fullName);
+        formData.append('invoice_number', invNo);
+        formData.append('pdf', pdfBlob, fileName);
+        
+        // Send the email
+        const response = await fetch('send_invoice.php', { 
+          method: 'POST',
+          body: formData
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to send invoice email');
         }
         
-      } catch (error) {
-        console.error('Error in generateInvoice:', error);
-        return {
-          success: false,
-          error: error.message || 'Failed to generate invoice'
+        return { 
+          success: true, 
+          pdfBlob, 
+          fileName,
+          invoiceNumber: invNo,
+          totalAmount: payload.totalAmount
         };
+      } catch (error) {
+        console.error('Error generating invoice:', error);
+        return { success: false, error: error.message };
       }
     }
   </script>
